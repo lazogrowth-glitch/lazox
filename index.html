@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VocalType — Dictée vocale universelle pour Windows</title>
+  <meta name="description" content="Dictez dans n'importe quelle application Windows avec VocalType. Un raccourci clavier, votre voix, le texte apparaît." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #07070f;
+      --bg2:       #0f0f1a;
+      --bg3:       #14142b;
+      --accent:    #6366f1;
+      --accent2:   #818cf8;
+      --accent3:   #a5b4fc;
+      --pink:      #ec4899;
+      --green:     #22c55e;
+      --text:      #f1f5f9;
+      --text2:     #94a3b8;
+      --border:    rgba(99,102,241,0.2);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 40px;
+      background: rgba(7,7,15,0.8);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .logo {
+      font-size: 1.25rem; font-weight: 800;
+      background: linear-gradient(135deg, var(--accent3), var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
+    }
+    .nav-dl {
+      background: var(--accent);
+      color: white; font-weight: 600; font-size: 0.85rem;
+      padding: 10px 20px; border-radius: 10px;
+      text-decoration: none; transition: all 0.2s;
+      border: none; cursor: pointer;
+    }
+    .nav-dl:hover { background: var(--accent2); transform: translateY(-1px); }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 120px 20px 80px;
+      position: relative; overflow: hidden;
+    }
+
+    /* Animated gradient orbs */
+    .orb {
+      position: absolute; border-radius: 50%; filter: blur(120px);
+      animation: float 8s ease-in-out infinite; pointer-events: none;
+    }
+    .orb1 { width: 600px; height: 600px; background: rgba(99,102,241,0.15); top: -100px; left: -100px; }
+    .orb2 { width: 500px; height: 500px; background: rgba(236,72,153,0.08); bottom: -100px; right: -100px; animation-delay: -4s; }
+    .orb3 { width: 300px; height: 300px; background: rgba(165,180,252,0.1); top: 40%; left: 60%; animation-delay: -2s; }
+    @keyframes float {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50%       { transform: translateY(-30px) scale(1.05); }
+    }
+
+    /* Floating pill demo */
+    .pill-demo {
+      display: flex; align-items: center; gap: 10px;
+      background: rgba(59,0,0,0.7);
+      border: 1px solid rgba(252,165,165,0.3);
+      border-radius: 50px; padding: 8px 20px;
+      margin-bottom: 48px;
+      animation: pillpulse 2s ease-in-out infinite;
+      backdrop-filter: blur(10px);
+    }
+    .pill-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #fca5a5;
+      animation: blink 1.4s ease-in-out infinite;
+    }
+    .pill-text { font-size: 0.9rem; color: #fca5a5; font-weight: 600; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    @keyframes pillpulse { 0%,100%{box-shadow:0 0 0 0 rgba(252,165,165,0.2)} 50%{box-shadow:0 0 0 8px rgba(252,165,165,0)} }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(99,102,241,0.1);
+      border: 1px solid var(--border);
+      border-radius: 50px; padding: 6px 16px;
+      font-size: 0.8rem; color: var(--accent3);
+      font-weight: 500; margin-bottom: 28px;
+    }
+    .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: blink 2s infinite; }
+
+    h1 {
+      font-size: clamp(2.8rem, 6vw, 5.5rem);
+      font-weight: 900; line-height: 1.05;
+      text-align: center; max-width: 900px;
+      letter-spacing: -2px;
+      background: linear-gradient(135deg, #fff 0%, var(--accent3) 50%, var(--accent) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 24px;
+    }
+
+    .hero-sub {
+      font-size: clamp(1rem, 2vw, 1.3rem);
+      color: var(--text2); text-align: center; max-width: 600px;
+      line-height: 1.7; margin-bottom: 48px; font-weight: 400;
+    }
+
+    .hero-cta { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; justify-content: center; margin-bottom: 72px; }
+
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: linear-gradient(135deg, var(--accent), #7c3aed);
+      color: white; font-weight: 700; font-size: 1.05rem;
+      padding: 18px 36px; border-radius: 14px;
+      text-decoration: none; transition: all 0.25s;
+      box-shadow: 0 0 40px rgba(99,102,241,0.4);
+      border: none; cursor: pointer;
+    }
+    .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 0 60px rgba(99,102,241,0.6); }
+    .btn-primary svg { width: 20px; height: 20px; }
+
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 8px;
+      color: var(--text2); font-weight: 500; font-size: 0.95rem;
+      text-decoration: none; transition: color 0.2s;
+      background: none; border: none; cursor: pointer;
+    }
+    .btn-secondary:hover { color: var(--text); }
+
+    .hero-stats {
+      display: flex; gap: 48px; align-items: center; justify-content: center;
+      flex-wrap: wrap;
+    }
+    .stat { text-align: center; }
+    .stat-num { font-size: 1.8rem; font-weight: 800; color: var(--accent3); }
+    .stat-label { font-size: 0.8rem; color: var(--text2); font-weight: 500; margin-top: 2px; }
+
+    /* ── DEMO WINDOW ── */
+    .demo-section {
+      padding: 40px 20px 100px;
+      display: flex; justify-content: center;
+    }
+    .demo-window {
+      width: 100%; max-width: 860px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 20px; overflow: hidden;
+      box-shadow: 0 40px 100px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05);
+    }
+    .demo-topbar {
+      background: #0a0a18; padding: 14px 20px;
+      display: flex; align-items: center; gap: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .dot-r { width:12px;height:12px;border-radius:50%;background:#ff5f57; }
+    .dot-y { width:12px;height:12px;border-radius:50%;background:#febc2e; }
+    .dot-g { width:12px;height:12px;border-radius:50%;background:#28c840; }
+    .demo-title { font-size:0.8rem;color:var(--text2);margin-left:auto;margin-right:auto; }
+    .demo-body {
+      padding: 32px;
+      font-family: 'Inter', monospace;
+      font-size: 1rem; line-height: 1.8; color: var(--text);
+      min-height: 180px;
+    }
+    .typed-text { }
+    .cursor { display: inline-block; width: 2px; height: 1.1em; background: var(--accent3); margin-left: 2px; vertical-align: text-bottom; animation: blink 1s step-end infinite; }
+
+    /* Floating pill above window */
+    .pill-floating {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(59,0,0,0.9);
+      border: 1px solid rgba(252,165,165,0.4);
+      border-radius: 50px; padding: 6px 16px;
+      font-size: 0.8rem; color: #fca5a5; font-weight: 600;
+      width: fit-content; margin: 0 auto 12px;
+    }
+
+    /* ── HOW IT WORKS ── */
+    .section { padding: 100px 20px; }
+    .section-label {
+      text-align: center; font-size: 0.8rem; font-weight: 600;
+      color: var(--accent); text-transform: uppercase; letter-spacing: 2px;
+      margin-bottom: 16px;
+    }
+    h2 {
+      text-align: center; font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 800; letter-spacing: -1px; margin-bottom: 16px;
+    }
+    .section-sub {
+      text-align: center; color: var(--text2); font-size: 1.05rem;
+      max-width: 520px; margin: 0 auto 72px; line-height: 1.7;
+    }
+
+    .steps {
+      display: flex; gap: 0; max-width: 1000px; margin: 0 auto;
+      flex-wrap: wrap; justify-content: center;
+    }
+    .step {
+      flex: 1; min-width: 200px; max-width: 250px;
+      display: flex; flex-direction: column; align-items: center;
+      text-align: center; padding: 32px 24px; position: relative;
+    }
+    .step:not(:last-child)::after {
+      content: '→';
+      position: absolute; right: -8px; top: 44px;
+      color: var(--border); font-size: 1.5rem;
+    }
+    .step-num {
+      width: 56px; height: 56px; border-radius: 16px;
+      background: linear-gradient(135deg, var(--accent), #7c3aed);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; margin-bottom: 20px;
+      box-shadow: 0 8px 30px rgba(99,102,241,0.3);
+    }
+    .step-title { font-size: 1rem; font-weight: 700; margin-bottom: 10px; }
+    .step-desc { font-size: 0.9rem; color: var(--text2); line-height: 1.6; }
+    .shortcut {
+      display: inline-flex; gap: 4px; align-items: center;
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 8px; padding: 4px 10px; font-size: 0.85rem;
+      font-family: monospace; color: var(--accent3); font-weight: 600;
+      margin-top: 8px;
+    }
+
+    /* ── FEATURES ── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px; max-width: 1000px; margin: 0 auto;
+    }
+    .feature-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 20px; padding: 32px;
+      transition: all 0.3s; position: relative; overflow: hidden;
+    }
+    .feature-card::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(99,102,241,0.05), transparent);
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .feature-card:hover { border-color: rgba(99,102,241,0.4); transform: translateY(-4px); box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    .feature-card:hover::before { opacity: 1; }
+    .feature-icon { font-size: 2rem; margin-bottom: 16px; }
+    .feature-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 10px; }
+    .feature-desc { font-size: 0.9rem; color: var(--text2); line-height: 1.6; }
+    .feature-tag {
+      display: inline-block; margin-top: 14px;
+      background: rgba(99,102,241,0.12);
+      border: 1px solid rgba(99,102,241,0.25);
+      border-radius: 6px; padding: 3px 10px;
+      font-size: 0.75rem; color: var(--accent3); font-weight: 600;
+    }
+
+    /* ── COMPAT ── */
+    .compat-section { padding: 80px 20px; text-align: center; }
+    .compat-grid {
+      display: flex; flex-wrap: wrap; gap: 12px;
+      justify-content: center; max-width: 700px; margin: 48px auto 0;
+    }
+    .compat-chip {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px 20px;
+      font-size: 0.9rem; font-weight: 500; color: var(--text2);
+      display: flex; align-items: center; gap: 8px;
+      transition: all 0.2s;
+    }
+    .compat-chip:hover { border-color: rgba(99,102,241,0.4); color: var(--text); }
+    .compat-chip .icon { font-size: 1.1rem; }
+
+    /* ── PRICING ── */
+    .pricing-section { padding: 100px 20px; }
+    .pricing-card {
+      max-width: 440px; margin: 0 auto;
+      background: var(--bg2);
+      border: 2px solid var(--accent);
+      border-radius: 24px; padding: 48px 40px;
+      text-align: center; position: relative;
+      box-shadow: 0 0 80px rgba(99,102,241,0.2);
+    }
+    .pricing-badge {
+      position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+      background: linear-gradient(135deg, var(--accent), #7c3aed);
+      color: white; font-size: 0.75rem; font-weight: 700;
+      padding: 4px 16px; border-radius: 50px; white-space: nowrap;
+    }
+    .price { font-size: 4rem; font-weight: 900; letter-spacing: -2px; }
+    .price span { font-size: 1.2rem; font-weight: 500; color: var(--text2); vertical-align: super; }
+    .price sub { font-size: 1rem; font-weight: 500; color: var(--text2); vertical-align: sub; }
+    .pricing-list { list-style: none; margin: 32px 0; text-align: left; }
+    .pricing-list li {
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 10px 0; font-size: 0.95rem; color: var(--text2);
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .pricing-list li:last-child { border: none; }
+    .check { color: var(--green); font-size: 1.1rem; flex-shrink: 0; }
+
+    /* ── CTA BOTTOM ── */
+    .cta-section {
+      padding: 100px 20px;
+      display: flex; flex-direction: column; align-items: center; text-align: center;
+      background: radial-gradient(ellipse at center, rgba(99,102,241,0.12) 0%, transparent 70%);
+    }
+    .cta-section h2 { margin-bottom: 16px; }
+    .cta-section p { color: var(--text2); font-size: 1.05rem; margin-bottom: 40px; max-width: 480px; line-height: 1.7; }
+    .dl-note { margin-top: 16px; font-size: 0.8rem; color: var(--text2); }
+    .dl-note strong { color: var(--accent3); }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 40px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 16px;
+      color: var(--text2); font-size: 0.85rem;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 600px) {
+      nav { padding: 16px 20px; }
+      .hero-stats { gap: 28px; }
+      .step:not(:last-child)::after { display: none; }
+      footer { justify-content: center; text-align: center; }
+      .pricing-card { padding: 40px 24px; }
+    }
+
+    /* ── SCROLL ANIMATIONS ── */
+    .reveal {
+      opacity: 0; transform: translateY(30px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .reveal.visible { opacity: 1; transform: none; }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">VocalType</div>
+  <a class="nav-dl" href="https://github.com/lazogrowth-glitch/lazox/releases/download/v1.0/VocalType_Setup.exe">
+    Télécharger — Gratuit
+  </a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+
+  <div class="pill-demo">
+    <div class="pill-dot"></div>
+    <div class="pill-text">Ecoute...</div>
+  </div>
+
+  <div class="hero-badge">
+    <div class="badge-dot"></div>
+    Disponible pour Windows — Gratuit
+  </div>
+
+  <h1>Dictez dans<br/>n'importe quelle app</h1>
+
+  <p class="hero-sub">
+    Un raccourci clavier. Votre voix. Le texte apparaît partout —
+    Word, Chrome, Notion, Discord, n'importe où sur Windows.
+  </p>
+
+  <div class="hero-cta">
+    <a class="btn-primary" href="https://github.com/lazogrowth-glitch/lazox/releases/download/v1.0/VocalType_Setup.exe">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17"/>
+      </svg>
+      Télécharger VocalType
+    </a>
+    <a class="btn-secondary" href="#comment">
+      Comment ça marche →
+    </a>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat"><div class="stat-num">100%</div><div class="stat-label">Gratuit</div></div>
+    <div class="stat"><div class="stat-num">< 10s</div><div class="stat-label">Installation</div></div>
+    <div class="stat"><div class="stat-num">∞</div><div class="stat-label">Applications supportées</div></div>
+    <div class="stat"><div class="stat-num">Windows</div><div class="stat-label">10 / 11</div></div>
+  </div>
+</section>
+
+<!-- DEMO WINDOW -->
+<section class="demo-section">
+  <div>
+    <div class="pill-floating">
+      <div class="pill-dot"></div>
+      Ecoute...
+    </div>
+    <div class="demo-window reveal">
+      <div class="demo-topbar">
+        <div class="dot-r"></div>
+        <div class="dot-y"></div>
+        <div class="dot-g"></div>
+        <div class="demo-title">document.docx — Word</div>
+      </div>
+      <div class="demo-body">
+        <span class="typed-text" id="typed"></span><span class="cursor"></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section" id="comment">
+  <p class="section-label">Comment ça marche</p>
+  <h2>Trois étapes, c'est tout</h2>
+  <p class="section-sub">Pas de configuration compliquée. En 30 secondes vous êtes prêt.</p>
+
+  <div class="steps reveal">
+    <div class="step">
+      <div class="step-num">📥</div>
+      <div class="step-title">1. Installez</div>
+      <div class="step-desc">Téléchargez et lancez l'installateur. VocalType s'installe silencieusement.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">⌨️</div>
+      <div class="step-title">2. Activez</div>
+      <div class="step-desc">Cliquez dans n'importe quelle zone de texte puis appuyez sur :</div>
+      <div class="shortcut">Ctrl + Shift + Espace</div>
+    </div>
+    <div class="step">
+      <div class="step-num">🎙️</div>
+      <div class="step-title">3. Parlez</div>
+      <div class="step-desc">Parlez naturellement. Le texte apparaît automatiquement dans votre application.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">✅</div>
+      <div class="step-title">4. Terminez</div>
+      <div class="step-desc">Appuyez à nouveau sur le raccourci pour arrêter. Votre texte est collé.</div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="section" style="background: var(--bg2); padding: 100px 20px;">
+  <p class="section-label">Fonctionnalités</p>
+  <h2>Tout ce dont vous avez besoin</h2>
+  <p class="section-sub">Conçu pour être simple, rapide et discret.</p>
+
+  <div class="features-grid reveal">
+    <div class="feature-card">
+      <div class="feature-icon">🌍</div>
+      <div class="feature-title">Fonctionne partout</div>
+      <div class="feature-desc">Word, Excel, Chrome, Outlook, Discord, VS Code, Notepad — absolument n'importe quelle application Windows.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⚡</div>
+      <div class="feature-title">Mode Précis & Rapide</div>
+      <div class="feature-desc">Mode précis pour une transcription parfaite. Mode rapide (BETA) pour voir le texte apparaître en temps réel.</div>
+      <span class="feature-tag">2 modes</span>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔒</div>
+      <div class="feature-title">Discret & Léger</div>
+      <div class="feature-desc">Un simple point dans la barre du haut. Disparaît quand vous ne l'utilisez pas. Aucun impact sur les performances.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📋</div>
+      <div class="feature-title">Historique des dictées</div>
+      <div class="feature-desc">Retrouvez toutes vos dictées précédentes et recollez-les en un clic. Parfait pour réutiliser vos phrases.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🌐</div>
+      <div class="feature-title">Français & Anglais</div>
+      <div class="feature-desc">Basculez entre le français et l'anglais depuis les paramètres. Plus de langues bientôt.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🚀</div>
+      <div class="feature-title">Démarrage automatique</div>
+      <div class="feature-desc">Optionnel : VocalType se lance avec Windows et reste disponible en permanence en arrière-plan.</div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPATIBILITY -->
+<section class="compat-section reveal">
+  <p class="section-label">Compatibilité</p>
+  <h2>Fonctionne dans toutes ces apps</h2>
+
+  <div class="compat-grid">
+    <div class="compat-chip"><span class="icon">📝</span> Microsoft Word</div>
+    <div class="compat-chip"><span class="icon">📊</span> Excel</div>
+    <div class="compat-chip"><span class="icon">📧</span> Outlook</div>
+    <div class="compat-chip"><span class="icon">🌐</span> Chrome / Edge</div>
+    <div class="compat-chip"><span class="icon">💬</span> Discord</div>
+    <div class="compat-chip"><span class="icon">💡</span> Notion</div>
+    <div class="compat-chip"><span class="icon">💻</span> VS Code</div>
+    <div class="compat-chip"><span class="icon">📓</span> Notepad</div>
+    <div class="compat-chip"><span class="icon">✉️</span> Gmail</div>
+    <div class="compat-chip"><span class="icon">💼</span> Slack</div>
+    <div class="compat-chip"><span class="icon">🎮</span> Et bien d'autres…</div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing-section">
+  <p class="section-label">Tarif</p>
+  <h2>Simple et transparent</h2>
+  <p class="section-sub" style="margin-bottom:48px">Un seul plan. Tout inclus.</p>
+
+  <div class="pricing-card reveal">
+    <div class="pricing-badge">🎉 Lancement — Accès gratuit</div>
+    <div class="price"><span>$</span>0<sub>/mois</sub></div>
+    <p style="color:var(--text2);margin-top:8px;font-size:0.9rem">Profitez gratuitement pendant le lancement</p>
+
+    <ul class="pricing-list">
+      <li><span class="check">✓</span> Dictée illimitée</li>
+      <li><span class="check">✓</span> Toutes les applications Windows</li>
+      <li><span class="check">✓</span> Mode précis + Mode rapide (BETA)</li>
+      <li><span class="check">✓</span> Historique des 50 dernières dictées</li>
+      <li><span class="check">✓</span> Français & Anglais</li>
+      <li><span class="check">✓</span> Mises à jour gratuites</li>
+    </ul>
+
+    <a class="btn-primary" style="width:100%;justify-content:center;" href="https://github.com/lazogrowth-glitch/lazox/releases/download/v1.0/VocalType_Setup.exe">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="20">
+        <path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17"/>
+      </svg>
+      Télécharger maintenant — Gratuit
+    </a>
+    <p style="font-size:0.78rem;color:var(--text2);margin-top:14px">Windows 10/11 · ~15 MB · Installation en 10 secondes</p>
+  </div>
+</section>
+
+<!-- CTA BOTTOM -->
+<section class="cta-section">
+  <h2>Prêt à dicter ?</h2>
+  <p>Téléchargez VocalType et commencez à dicter dans n'importe quelle application en moins d'une minute.</p>
+  <a class="btn-primary" href="https://github.com/lazogrowth-glitch/lazox/releases/download/v1.0/VocalType_Setup.exe">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="20">
+      <path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17"/>
+    </svg>
+    Télécharger VocalType — Gratuit
+  </a>
+  <p class="dl-note">Compatible <strong>Windows 10 & 11</strong> · Aucun compte requis</p>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="logo">VocalType</div>
+  <div>Dictée vocale universelle pour Windows</div>
+  <div>
+    <a href="https://github.com/lazogrowth-glitch/lazox" style="color:var(--text2);text-decoration:none;">GitHub</a>
+  </div>
+</footer>
+
+<script>
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+  }, { threshold: 0.1, rootMargin: '0px 0px -60px 0px' });
+  reveals.forEach(r => observer.observe(r));
+
+  // Typing animation
+  const phrases = [
+    "Bonjour, voici mon rapport du mois de mars...",
+    "Je voulais te dire que la réunion est confirmée pour demain à 14h.",
+    "N'oublie pas d'envoyer le devis au client avant vendredi.",
+    "Merci pour votre retour, je reviens vers vous rapidement.",
+  ];
+  let pi = 0, ci = 0, del = false;
+  const el = document.getElementById('typed');
+
+  function type() {
+    const cur = phrases[pi];
+    if (!del) {
+      el.textContent = cur.slice(0, ++ci);
+      if (ci === cur.length) { del = true; setTimeout(type, 1800); return; }
+      setTimeout(type, 42);
+    } else {
+      el.textContent = cur.slice(0, --ci);
+      if (ci === 0) { del = false; pi = (pi + 1) % phrases.length; setTimeout(type, 400); return; }
+      setTimeout(type, 18);
+    }
+  }
+  type();
+</script>
+</body>
+</html>
