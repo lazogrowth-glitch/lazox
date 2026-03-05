@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "VocalType",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["dictation.py"],
+      "port": 5000
+    }
+  ]
+}

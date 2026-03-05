@@ -1,0 +1,41 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install SpeechRecognition sounddevice numpy scipy pyperclip keyboard)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(pip install Pillow pystray --quiet)",
+      "Bash(dir \"C:\\\\Users\\\\smail\\\\Desktop\\\\claude\\\\aplication de dictation\" /B)",
+      "Bash(python dictation.py --help)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''dictation.py''\\).read\\(\\)\\); print\\(''Syntaxe OK''\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''dictation.py''\\).read\\(\\)\\); print\\(''Syntaxe OK - pas d erreur''\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''dictation.py'', encoding=''utf-8''\\).read\\(\\)\\); print\\(''Syntaxe OK''\\)\")",
+      "Bash(start build.bat)",
+      "Bash(powershell -command \"Get-Process pyinstaller -ErrorAction SilentlyContinue; Get-Process python -ErrorAction SilentlyContinue | Select-Object Name, Id, StartTime\")",
+      "Bash(python generate_icon.py)",
+      "Bash(pyinstaller --onefile --windowed --name VocalType --icon icon.ico --hidden-import=speech_recognition --hidden-import=pystray --hidden-import=pystray._win32 --hidden-import=PIL --hidden-import=PIL.Image --hidden-import=PIL.ImageDraw --hidden-import=sounddevice --hidden-import=numpy --hidden-import=scipy --hidden-import=scipy.io --hidden-import=scipy.io.wavfile --hidden-import=pyperclip --hidden-import=keyboard --hidden-import=winreg --hidden-import=winsound --hidden-import=ctypes --collect-all=speech_recognition --collect-all=sounddevice dictation.py)",
+      "Bash(taskkill /F /IM VocalType.exe)",
+      "Bash(powershell -command \"Stop-Process -Name VocalType -Force -ErrorAction SilentlyContinue; Write-Host ''Ferme''\")",
+      "Bash(pyinstaller --onefile --windowed --name VocalType --icon icon.ico --hidden-import=speech_recognition --hidden-import=pystray --hidden-import=pystray._win32 --hidden-import=PIL --hidden-import=PIL.Image --hidden-import=PIL.ImageDraw --hidden-import=sounddevice --hidden-import=numpy --hidden-import=scipy --hidden-import=scipy.io --hidden-import=scipy.io.wavfile --hidden-import=pyperclip --hidden-import=keyboard --hidden-import=winreg --hidden-import=winsound --hidden-import=ctypes --collect-all=speech_recognition dictation.py)",
+      "Bash(powershell -command \"Get-Item ''C:\\\\Users\\\\smail\\\\Desktop\\\\claude\\\\aplication de dictation\\\\dist\\\\VocalType.exe'' | Select-Object LastWriteTime, @{N=''SizeMB'';E={[math]::Round\\($_Length/1MB,1\\)}}\")",
+      "Bash(powershell -command \"Get-Item ''C:\\\\Users\\\\smail\\\\Desktop\\\\claude\\\\aplication de dictation\\\\dist\\\\VocalType.exe'' | Select-Object LastWriteTime, Length\")",
+      "Bash(find \"C:\\\\Users\\\\smail\\\\Desktop\\\\claude\\\\aplication de dictation\" -type f -exec du -h {} +)",
+      "Bash(python -m py_compile dictation.py)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''C:/Users/smail/Desktop/claude/aplication de dictation/dictation.py'', encoding=''utf-8''\\).read\\(\\)\\); print\\(''Syntaxe OK''\\)\")",
+      "Bash(powershell -command \"Stop-Process -Name VocalType -Force -ErrorAction SilentlyContinue; Write-Host ''VocalType ferme''\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''C:/Users/smail/Desktop/claude/aplication de dictation/dictation.py'', encoding=''utf-8''\\).read\\(\\)\\); print\\(''OK''\\)\")",
+      "Bash(powershell -command \"Stop-Process -Name VocalType -Force -ErrorAction SilentlyContinue; Write-Host ''OK''\")",
+      "Bash(pyinstaller --noconfirm --onefile --windowed --icon=icon.ico --name=VocalType --hidden-import=speech_recognition --hidden-import=sounddevice --hidden-import=numpy --hidden-import=scipy --hidden-import=scipy.signal --hidden-import=pyperclip --hidden-import=keyboard --hidden-import=PIL --hidden-import=PIL.Image --hidden-import=PIL.ImageDraw --hidden-import=PIL.ImageFont --hidden-import=pystray --hidden-import=pystray._win32 --hidden-import=tkinter --hidden-import=tkinter.ttk --hidden-import=tkinter.messagebox --hidden-import=tkinter.simpledialog --hidden-import=tkinter.scrolledtext --add-data \"icon.ico;.\" dictation.py)",
+      "Bash(taskkill //F //IM VocalType.exe //T)",
+      "Bash(git --version)",
+      "Bash(git init)",
+      "Bash(git remote add origin https://github.com/lazogrowth-glitch/lazox.git)",
+      "Bash(git add backend/ index.html dictation.py requirements.txt setup.iss build.bat create_installer.bat install.bat .gitignore icon.ico generate_icon.py)",
+      "Bash(git commit -m \"VocalType - app + backend Stripe + site web\")",
+      "Bash(git config user.email \"lazogrowth@gmail.com\")",
+      "Bash(git config user.name \"lazogrowth-glitch\")",
+      "Bash(git branch -M main)",
+      "Bash(git push -u origin main)",
+      "Bash(gh auth status)"
+    ]
+  }
+}
