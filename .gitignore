@@ -1,0 +1,10 @@
+build/
+__pycache__/
+*.pyc
+*.spec
+dist/VocalType.exe
+vocaltype.log
+settings.json
+history.json
+*.db
+nul

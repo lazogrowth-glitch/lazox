@@ -1,0 +1,8 @@
+SpeechRecognition>=3.10.0
+sounddevice>=0.4.5
+numpy>=1.21.0
+scipy>=1.7.0
+pyperclip>=1.8.0
+keyboard>=0.13.0
+Pillow>=9.0.0
+pystray>=0.15.0
