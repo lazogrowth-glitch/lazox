@@ -93,6 +93,32 @@ def health():
     return jsonify({'status': 'ok', 'app': 'VocalType Backend'})
 
 
+@app.route('/admin/activate')
+def admin_activate():
+    secret = request.args.get('secret', '')
+    email  = request.args.get('email', '').strip().lower()
+    admin_secret = os.environ.get('ADMIN_SECRET', '')
+
+    if not admin_secret or secret != admin_secret:
+        return jsonify({'error': 'Non autorise'}), 401
+    if not email:
+        return jsonify({'error': 'Email requis'}), 400
+
+    db = get_db()
+    db.execute(
+        "UPDATE users SET subscription_status='active', period_end='2099-12-31T00:00:00' WHERE email=?",
+        (email,)
+    )
+    db.commit()
+    user = db.execute('SELECT email, subscription_status, period_end FROM users WHERE email=?',
+                      (email,)).fetchone()
+    db.close()
+
+    if not user:
+        return jsonify({'error': f'Utilisateur {email} introuvable. Cree le compte dabord.'}), 404
+    return jsonify({'ok': True, 'email': user['email'], 'status': user['subscription_status']})
+
+
 @app.route('/register', methods=['POST'])
 def register():
     data     = request.json or {}
