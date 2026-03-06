@@ -6,7 +6,7 @@
 
 [Setup]
 AppName=VocalType
-AppVersion=1.0
+AppVersion=1.1
 AppPublisher=VocalType
 AppPublisherURL=https://github.com
 DefaultDirName={localappdata}\VocalType
