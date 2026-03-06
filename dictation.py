@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 VocalType - Dictee vocale universelle pour Windows
-Raccourci par defaut : Ctrl+Alt+Espace
+Raccourci par defaut : Ctrl+Shift+Espace
 """
 
 import os
@@ -15,7 +15,10 @@ import tempfile
 import winreg
 import winsound
 import logging
-from datetime import datetime
+import webbrowser
+import urllib.request
+import urllib.error
+from datetime import datetime, timedelta
 
 # ── Instance unique ───────────────────────────────────────────
 _MUTEX = ctypes.windll.kernel32.CreateMutexW(None, True, "VocalType_SingleInstance_v1")
@@ -47,6 +50,7 @@ else:
 SETTINGS_PATH = os.path.join(_DIR, 'settings.json')
 HISTORY_PATH  = os.path.join(_DIR, 'history.json')
 LOG_PATH      = os.path.join(_DIR, 'vocaltype.log')
+AUTH_PATH     = os.path.join(_DIR, 'auth.json')
 
 # ── Logging ───────────────────────────────────────────────────
 logging.basicConfig(
@@ -68,6 +72,7 @@ VAD_MIN_SEC       = 0.4        # Duree minimale d'audio pour tenter la transcrip
 VAD_MAX_SEC       = 3.5        # Duree max avant envoi force (si parole continue)
 MAX_HISTORY       = 50
 SILENCE_THRESHOLD = 0.012
+BACKEND_URL       = 'https://lazox-production.up.railway.app'
 
 # Tailles de la pilule
 PW_MINI, PH_MINI = 22, 22    # Mini : petit point discret en haut de l'ecran
@@ -88,7 +93,7 @@ _LABELS = {
     'processing': 'Transcription...',
     'error':      'Erreur - reessaie',
 }
-PW_IDLE = 260   # Pilule idle plus large pour afficher les instructions
+PW_IDLE  = 260   # Pilule idle plus large pour afficher les instructions
 REG_PATH = r'Software\Microsoft\Windows\CurrentVersion\Run'
 
 UI = {
@@ -100,7 +105,34 @@ UI = {
     'text2':   '#94a3b8',
     'border':  '#2d2d4e',
     'btn':     '#6366f1',
+    'green':   '#86efac',
+    'red':     '#fca5a5',
 }
+
+
+# ── API Helper ────────────────────────────────────────────────
+def _api(endpoint, data=None, token=None):
+    """Appel HTTP vers le backend Railway.
+    data=None => GET, data=dict => POST JSON.
+    Retourne (dict|None, code_http).  code_http=0 si erreur reseau."""
+    url     = BACKEND_URL + endpoint
+    headers = {'Content-Type': 'application/json'}
+    if token:
+        headers['Authorization'] = f'Bearer {token}'
+    body   = json.dumps(data).encode('utf-8') if data is not None else None
+    method = 'POST' if data is not None else 'GET'
+    try:
+        req = urllib.request.Request(url, data=body, headers=headers, method=method)
+        with urllib.request.urlopen(req, timeout=10) as r:
+            return json.loads(r.read().decode('utf-8')), r.status
+    except urllib.error.HTTPError as e:
+        try:
+            return json.loads(e.read().decode('utf-8')), e.code
+        except Exception:
+            return {'error': str(e)}, e.code
+    except Exception as e:
+        log.error(f"API {endpoint} erreur reseau : {e}")
+        return None, 0
 
 
 # ── Colle le texte via l'API Windows directement ──────────────
@@ -163,7 +195,7 @@ class Settings:
                 if isinstance(loaded.get('silence_sec'), (int, float)):
                     self._data['silence_sec'] = int(loaded['silence_sec'])
         except FileNotFoundError:
-            pass   # Premier lancement, fichier pas encore cree
+            pass
         except Exception as e:
             log.warning(f"Settings corrompus, defaults utilises : {e}")
 
@@ -184,47 +216,348 @@ class Settings:
 
 
 # ══════════════════════════════════════════════════════════════
-#  HISTORIQUE
+#  AUTH MANAGER
 # ══════════════════════════════════════════════════════════════
-class History:
+class AuthManager:
+    """Gere le token JWT et la verification d'abonnement."""
+
     def __init__(self):
-        self._lock  = threading.Lock()
-        self._items = []
+        self.token         = None
+        self.email         = None
+        self.last_verified = None   # ISO datetime UTC
         self._load()
 
     def _load(self):
         try:
-            with open(HISTORY_PATH, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                if isinstance(data, list):
-                    self._items = data
+            with open(AUTH_PATH, 'r', encoding='utf-8') as f:
+                d = json.load(f)
+                self.token         = d.get('token')
+                self.email         = d.get('email')
+                self.last_verified = d.get('last_verified')
         except Exception:
-            self._items = []
+            pass
 
-    def _save(self):
+    def save(self, token, email):
+        self.token         = token
+        self.email         = email
+        self.last_verified = datetime.utcnow().isoformat()
         try:
-            with open(HISTORY_PATH, 'w', encoding='utf-8') as f:
-                json.dump(self._items[-MAX_HISTORY:], f,
-                          ensure_ascii=False, indent=2)
+            with open(AUTH_PATH, 'w', encoding='utf-8') as f:
+                json.dump({
+                    'token':         token,
+                    'email':         email,
+                    'last_verified': self.last_verified,
+                }, f)
         except Exception as e:
-            log.error(f"Impossible de sauvegarder l'historique : {e}")
-
-    def add(self, text):
-        with self._lock:
-            ts = datetime.now().strftime('%H:%M')
-            self._items.append([ts, text])
-            if len(self._items) > MAX_HISTORY:
-                self._items = self._items[-MAX_HISTORY:]
-            self._save()
+            log.error(f"Auth save error : {e}")
 
     def clear(self):
-        with self._lock:
-            self._items = []
-            self._save()
+        self.token = self.email = self.last_verified = None
+        try:
+            os.unlink(AUTH_PATH)
+        except Exception:
+            pass
 
-    def all(self):
-        with self._lock:
-            return list(reversed(self._items))
+    def check_subscription(self):
+        """Verifie l'abonnement aupres du backend.
+        Retourne (is_active|None, status|None, error_str|None).
+        is_active=None signifie erreur reseau."""
+        if not self.token:
+            return False, None, 'no_token'
+        data, code = _api('/me', token=self.token)
+        if code == 0:
+            return None, None, 'network'
+        if code == 401:
+            return False, None, 'expired'
+        if data and 'active' in data:
+            return data['active'], data.get('status'), None
+        return False, None, 'unknown'
+
+
+# ══════════════════════════════════════════════════════════════
+#  FENÊTRE CONNEXION / INSCRIPTION
+# ══════════════════════════════════════════════════════════════
+class LoginWindow:
+    """Fenetre de connexion/inscription.  Apres wait_window(), verifier .result."""
+
+    def __init__(self, parent, auth_manager):
+        self.auth   = auth_manager
+        self.result = None   # 'ok' | 'quit'
+        self.active = False
+        self.status = 'none'
+        self.mode   = 'login'
+
+        self.win = tk.Toplevel(parent)
+        self.win.title("VocalType - Connexion")
+        self.win.resizable(False, False)
+        self.win.configure(bg=UI['bg'])
+        self.win.wm_attributes('-topmost', True)
+        sw = self.win.winfo_screenwidth()
+        sh = self.win.winfo_screenheight()
+        w, h = 380, 490
+        self.win.geometry(f"{w}x{h}+{(sw-w)//2}+{(sh-h)//2}")
+        self.win.protocol('WM_DELETE_WINDOW', self._on_close)
+        self._build()
+
+    def _on_close(self):
+        self.result = 'quit'
+        self.win.destroy()
+
+    def _build(self):
+        # En-tete
+        tk.Label(self.win, text="🎤", bg=UI['bg'], fg=UI['accent'],
+                 font=('Segoe UI', 36)).pack(pady=(26, 0))
+        tk.Label(self.win, text="VocalType", bg=UI['bg'], fg=UI['text'],
+                 font=('Segoe UI', 18, 'bold')).pack()
+        self.subtitle = tk.Label(self.win, text="Connexion a votre compte",
+                                  bg=UI['bg'], fg=UI['text2'],
+                                  font=('Segoe UI', 10))
+        self.subtitle.pack(pady=(2, 16))
+
+        # Email
+        tk.Label(self.win, text="Email", bg=UI['bg'], fg=UI['text2'],
+                 font=('Segoe UI', 9)).pack(anchor='w', padx=44)
+        self.email_var = tk.StringVar()
+        self.email_entry = tk.Entry(
+            self.win, textvariable=self.email_var,
+            bg=UI['bg2'], fg=UI['text'], insertbackground=UI['text'],
+            font=('Segoe UI', 11), relief='flat', bd=8, width=28)
+        self.email_entry.pack(padx=44, pady=(2, 10), fill='x')
+        self.email_entry.focus()
+
+        # Mot de passe
+        tk.Label(self.win, text="Mot de passe", bg=UI['bg'], fg=UI['text2'],
+                 font=('Segoe UI', 9)).pack(anchor='w', padx=44)
+        self.pass_var = tk.StringVar()
+        self.pass_entry = tk.Entry(
+            self.win, textvariable=self.pass_var, show='*',
+            bg=UI['bg2'], fg=UI['text'], insertbackground=UI['text'],
+            font=('Segoe UI', 11), relief='flat', bd=8, width=28)
+        self.pass_entry.pack(padx=44, pady=(2, 6), fill='x')
+        self.pass_entry.bind('<Return>', lambda e: self._submit())
+
+        # Message d'erreur
+        self.err_var = tk.StringVar()
+        tk.Label(self.win, textvariable=self.err_var,
+                 bg=UI['bg'], fg=UI['red'],
+                 font=('Segoe UI', 9), wraplength=300).pack(pady=(2, 4))
+
+        # Bouton principal
+        self.btn_text = tk.StringVar(value="Se connecter")
+        self.btn = tk.Button(
+            self.win, textvariable=self.btn_text,
+            bg=UI['btn'], fg='white',
+            font=('Segoe UI', 11, 'bold'),
+            relief='flat', padx=30, pady=10,
+            cursor='hand2', command=self._submit)
+        self.btn.pack(pady=8)
+
+        # Lien bascule login <-> register
+        self.toggle = tk.Label(
+            self.win, text="Pas encore de compte ?  Creer un compte  ->",
+            bg=UI['bg'], fg=UI['accent2'],
+            font=('Segoe UI', 9), cursor='hand2')
+        self.toggle.pack(pady=(4, 0))
+        self.toggle.bind('<Button-1>', self._toggle_mode)
+
+        # Mention prix
+        tk.Label(self.win, text="7 jours gratuits  *  5 $/mois (CAD) apres l'essai",
+                 bg=UI['bg'], fg=UI['text2'],
+                 font=('Segoe UI', 8)).pack(pady=(18, 0))
+
+    def _toggle_mode(self, _=None):
+        if self.mode == 'login':
+            self.mode = 'register'
+            self.win.title("VocalType - Creer un compte")
+            self.subtitle.config(text="Creer votre compte VocalType")
+            self.btn_text.set("Creer le compte")
+            self.toggle.config(text="Deja un compte ?  Se connecter  ->")
+        else:
+            self.mode = 'login'
+            self.win.title("VocalType - Connexion")
+            self.subtitle.config(text="Connexion a votre compte")
+            self.btn_text.set("Se connecter")
+            self.toggle.config(text="Pas encore de compte ?  Creer un compte  ->")
+        self.err_var.set('')
+
+    def _submit(self):
+        email    = self.email_var.get().strip().lower()
+        password = self.pass_var.get()
+
+        if not email or '@' not in email:
+            self.err_var.set("Email invalide")
+            return
+        if len(password) < 6:
+            self.err_var.set("Mot de passe trop court (min 6 caracteres)")
+            return
+
+        self.btn.config(state='disabled')
+        self.btn_text.set('Connexion...' if self.mode == 'login' else 'Creation...')
+        self.err_var.set('')
+
+        def _call():
+            endpoint = '/register' if self.mode == 'register' else '/login'
+            data, code = _api(endpoint, {'email': email, 'password': password})
+            self.win.after(0, lambda: self._handle(data, code, email))
+
+        threading.Thread(target=_call, daemon=True).start()
+
+    def _handle(self, data, code, email):
+        restore_lbl = 'Se connecter' if self.mode == 'login' else 'Creer le compte'
+        if code == 0:
+            self.err_var.set("Serveur inaccessible. Verifie ta connexion.")
+            self.btn.config(state='normal')
+            self.btn_text.set(restore_lbl)
+            return
+        if code not in (200, 201):
+            err = (data or {}).get('error', 'Erreur inconnue')
+            self.err_var.set(err)
+            self.btn.config(state='normal')
+            self.btn_text.set(restore_lbl)
+            return
+
+        token  = data.get('token', '')
+        active = data.get('active', False)
+        status = data.get('status', 'none')
+        self.auth.save(token, email)
+        self.active = active
+        self.status = status
+        self.result = 'ok'
+        self.win.destroy()
+
+
+# ══════════════════════════════════════════════════════════════
+#  FENÊTRE ABONNEMENT
+# ══════════════════════════════════════════════════════════════
+class SubscribeWindow:
+    """Fenetre pour demarrer l'essai Stripe ou verifier l'abonnement."""
+
+    def __init__(self, parent, auth_manager, email=''):
+        self.auth   = auth_manager
+        self.email  = email or auth_manager.email or ''
+        self.result = None   # 'ok' | 'quit'
+
+        self.win = tk.Toplevel(parent)
+        self.win.title("VocalType - Abonnement")
+        self.win.resizable(False, False)
+        self.win.configure(bg=UI['bg'])
+        self.win.wm_attributes('-topmost', True)
+        sw = self.win.winfo_screenwidth()
+        sh = self.win.winfo_screenheight()
+        w, h = 400, 440
+        self.win.geometry(f"{w}x{h}+{(sw-w)//2}+{(sh-h)//2}")
+        self.win.protocol('WM_DELETE_WINDOW', self._on_close)
+        self._build()
+
+    def _on_close(self):
+        self.result = 'quit'
+        self.win.destroy()
+
+    def _build(self):
+        tk.Label(self.win, text="🚀", bg=UI['bg'], fg=UI['accent'],
+                 font=('Segoe UI', 32)).pack(pady=(26, 0))
+        tk.Label(self.win, text="Commencer l'essai gratuit",
+                 bg=UI['bg'], fg=UI['text'],
+                 font=('Segoe UI', 15, 'bold')).pack()
+        tk.Label(self.win, text=f"Compte : {self.email}",
+                 bg=UI['bg'], fg=UI['text2'],
+                 font=('Segoe UI', 9)).pack(pady=(2, 18))
+
+        # Liste des avantages
+        avantages = [
+            "  7 jours gratuits, annulez n'importe quand",
+            "  Dictee vocale illimitee",
+            "  Fonctionne avec ChatGPT, Claude, Gemini...",
+            "  5 $/mois seulement (CAD) apres l'essai",
+        ]
+        for txt in avantages:
+            row = tk.Frame(self.win, bg=UI['bg'])
+            row.pack(anchor='w', padx=48, pady=1)
+            tk.Label(row, text="OK", bg=UI['bg'], fg=UI['green'],
+                     font=('Segoe UI', 9, 'bold')).pack(side='left')
+            tk.Label(row, text=txt, bg=UI['bg'], fg=UI['text'],
+                     font=('Segoe UI', 10)).pack(side='left')
+
+        # Bouton principal
+        self.main_btn = tk.Button(
+            self.win, text="Demarrer l'essai gratuit  ->",
+            bg=UI['btn'], fg='white',
+            font=('Segoe UI', 12, 'bold'),
+            relief='flat', padx=24, pady=12,
+            cursor='hand2', command=self._start_trial)
+        self.main_btn.pack(pady=(22, 6))
+
+        # Statut (messages d'info)
+        self.status_var = tk.StringVar()
+        tk.Label(self.win, textvariable=self.status_var,
+                 bg=UI['bg'], fg=UI['green'],
+                 font=('Segoe UI', 9), wraplength=360).pack(pady=2)
+
+        # Bouton verifier
+        self.check_btn = tk.Button(
+            self.win,
+            text="J'ai paye  ->  Verifier mon acces",
+            bg=UI['bg2'], fg=UI['text2'],
+            font=('Segoe UI', 9),
+            relief='flat', padx=14, pady=6,
+            cursor='hand2', command=self._check_sub)
+        self.check_btn.pack(pady=(0, 6))
+
+        tk.Label(self.win, text="Paiement securise par Stripe",
+                 bg=UI['bg'], fg=UI['text2'],
+                 font=('Segoe UI', 8)).pack(pady=(8, 0))
+
+    def _start_trial(self):
+        self.main_btn.config(state='disabled', text='Chargement...')
+        self.status_var.set('')
+
+        def _call():
+            data, code = _api('/create-checkout', data={}, token=self.auth.token)
+            self.win.after(0, lambda: self._open_checkout(data, code))
+
+        threading.Thread(target=_call, daemon=True).start()
+
+    def _open_checkout(self, data, code):
+        self.main_btn.config(state='normal', text="Demarrer l'essai gratuit  ->")
+        if code == 0:
+            self.status_var.set("Serveur inaccessible. Reessaie.")
+            return
+        if code != 200:
+            err = (data or {}).get('error', 'Erreur')
+            self.status_var.set(err)
+            return
+        url = (data or {}).get('url', '')
+        if url:
+            webbrowser.open(url)
+            self.status_var.set(
+                "Page Stripe ouverte dans ton navigateur !\n"
+                "Clique sur «J'ai paye» une fois l'abonnement active.")
+
+    def _check_sub(self):
+        self.check_btn.config(state='disabled', text='Verification...')
+        self.status_var.set('')
+
+        def _call():
+            is_active, status, error = self.auth.check_subscription()
+            self.win.after(0, lambda: self._handle_check(is_active, status, error))
+
+        threading.Thread(target=_call, daemon=True).start()
+
+    def _handle_check(self, is_active, status, error):
+        self.check_btn.config(state='normal',
+                               text="J'ai paye  ->  Verifier mon acces")
+        if error == 'network':
+            self.status_var.set("Serveur inaccessible. Reessaie.")
+            return
+        if is_active:
+            self.auth.save(self.auth.token, self.auth.email)
+            self.result = 'ok'
+            self.win.destroy()
+        else:
+            st = status or 'none'
+            self.status_var.set(
+                f"Abonnement non actif (statut : {st}).\n"
+                "Complete le paiement Stripe puis reessaie.")
 
 
 # ══════════════════════════════════════════════════════════════
@@ -381,17 +714,59 @@ class HistoryWindow:
         if sel[0] >= len(items):
             return
         _, text = items[sel[0]]
-        # IMPORTANT : fermer la fenetre d'abord pour que l'app
-        # precedente reprenne le focus AVANT d'envoyer Ctrl+V
         self.win.withdraw()
         def _do_paste():
-            time.sleep(0.6)   # Attendre que la fenetre precedente reprenne le focus
+            time.sleep(0.6)
             self.paste_cb(text)
         threading.Thread(target=_do_paste, daemon=True).start()
 
     def _clear(self):
         self.history.clear()
         self._refresh()
+
+
+# ══════════════════════════════════════════════════════════════
+#  HISTORIQUE
+# ══════════════════════════════════════════════════════════════
+class History:
+    def __init__(self):
+        self._lock  = threading.Lock()
+        self._items = []
+        self._load()
+
+    def _load(self):
+        try:
+            with open(HISTORY_PATH, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                if isinstance(data, list):
+                    self._items = data
+        except Exception:
+            self._items = []
+
+    def _save(self):
+        try:
+            with open(HISTORY_PATH, 'w', encoding='utf-8') as f:
+                json.dump(self._items[-MAX_HISTORY:], f,
+                          ensure_ascii=False, indent=2)
+        except Exception as e:
+            log.error(f"Impossible de sauvegarder l'historique : {e}")
+
+    def add(self, text):
+        with self._lock:
+            ts = datetime.now().strftime('%H:%M')
+            self._items.append([ts, text])
+            if len(self._items) > MAX_HISTORY:
+                self._items = self._items[-MAX_HISTORY:]
+            self._save()
+
+    def clear(self):
+        with self._lock:
+            self._items = []
+            self._save()
+
+    def all(self):
+        with self._lock:
+            return list(reversed(self._items))
 
 
 # ══════════════════════════════════════════════════════════════
@@ -412,9 +787,19 @@ class VocalType:
         self._is_ready       = False   # Pilule visible mais pas encore en ecoute
         self.settings        = Settings()
         self.history         = History()
+        self.auth            = AuthManager()
         self._current_hotkey = self.settings.get('hotkey') or DEFAULT_HOTKEY
 
-        self._setup_gui()       # GUI d'abord (self.root doit exister avant le tray)
+        self._setup_gui()       # GUI d'abord (self.root doit exister avant les Toplevel)
+
+        # ── Verification authentification + abonnement ─────────
+        if not self._check_auth():
+            try:
+                self.root.destroy()
+            except Exception:
+                pass
+            return
+
         self._setup_tray()
         self._setup_hotkey()
         self.root.mainloop()
@@ -422,7 +807,73 @@ class VocalType:
         if self.tray:
             self.tray.stop()
 
-    # ── Icône PIL ─────────────────────────────────────────────
+    # ── Auth : verification au lancement ──────────────────────
+
+    def _check_auth(self):
+        """Verifie auth + abonnement. Retourne True si OK, False si l'app doit quitter."""
+        if not self.auth.token:
+            return self._run_login_flow()
+
+        # Token present : verifier aupres du backend
+        is_active, status, error = self.auth.check_subscription()
+
+        if error == 'network':
+            # Mode hors-ligne : autoriser si derniere verification < 48h
+            if self.auth.last_verified:
+                try:
+                    age = datetime.utcnow() - datetime.fromisoformat(self.auth.last_verified)
+                    if age < timedelta(hours=48):
+                        log.info("Backend offline, mode grace (< 48h)")
+                        return True
+                except Exception:
+                    pass
+            # Grace expiree ou jamais verifie -> login
+            return self._run_login_flow()
+
+        if error in ('expired', 'unknown'):
+            self.auth.clear()
+            return self._run_login_flow()
+
+        if not is_active:
+            return self._run_subscribe_flow()
+
+        # Tout bon : mettre a jour last_verified
+        self.auth.save(self.auth.token, self.auth.email)
+        log.info(f"Auth OK ({self.auth.email}), statut : {status}")
+        return True
+
+    def _run_login_flow(self):
+        """Affiche la fenetre de connexion. Retourne True si auth reussie."""
+        login = LoginWindow(self.root, self.auth)
+        self.root.wait_window(login.win)
+        if login.result != 'ok':
+            return False
+        if login.active:
+            return True
+        return self._run_subscribe_flow()
+
+    def _run_subscribe_flow(self):
+        """Affiche la fenetre d'abonnement. Retourne True si abonne."""
+        sub = SubscribeWindow(self.root, self.auth)
+        self.root.wait_window(sub.win)
+        return sub.result == 'ok'
+
+    def _logout(self):
+        """Deconnexion : efface le token et quitte."""
+        self.auth.clear()
+        self._quit()
+
+    def _open_subscribe(self):
+        """Ouvre la fenetre d'abonnement depuis le menu."""
+        try:
+            if hasattr(self, '_subw') and self._subw.win.winfo_exists():
+                self._subw.win.lift()
+                return
+        except Exception:
+            pass
+        self._subw = SubscribeWindow(self.root, self.auth)
+
+    # ── Icone PIL ─────────────────────────────────────────────
 
     def _make_icon(self, size=64):
         img = Image.new('RGBA', (size, size), (0, 0, 0, 0))
@@ -457,7 +908,6 @@ class VocalType:
         self.root.config(bg=_TRANSP)
 
         sw = self.root.winfo_screenwidth()
-        # Demarrer en mode MINI (petit point discret)
         self.PW, self.PH = PW_MINI, PH_MINI
         self._is_mini = True
         x = (sw - PW_MINI) // 2
@@ -554,10 +1004,17 @@ class VocalType:
 
     def _right_click(self, e):
         m = tk.Menu(self.root, tearoff=0)
-        m.add_command(label="Parametres",  command=self._open_settings)
-        m.add_command(label="Historique",  command=self._open_history)
+        # Info compte
+        if self.auth.email:
+            m.add_command(label=f"  {self.auth.email}", state='disabled')
+            m.add_separator()
+        m.add_command(label="Parametres",     command=self._open_settings)
+        m.add_command(label="Historique",     command=self._open_history)
         m.add_separator()
-        m.add_command(label="Quitter",     command=self._quit)
+        m.add_command(label="Mon abonnement", command=self._open_subscribe)
+        m.add_command(label="Se deconnecter", command=self._logout)
+        m.add_separator()
+        m.add_command(label="Quitter",        command=self._quit)
         m.tk_popup(e.x_root, e.y_root)
 
     def _quit(self):
@@ -570,18 +1027,24 @@ class VocalType:
     def _setup_tray(self):
         try:
             self._save_ico()
+            email_label = self.auth.email or 'Non connecte'
             menu = pystray.Menu(
                 pystray.MenuItem(APP_NAME, None, enabled=False),
+                pystray.MenuItem(email_label, None, enabled=False),
                 pystray.Menu.SEPARATOR,
                 pystray.MenuItem('Parametres',
                                  lambda: self.root.after(0, self._open_settings)),
                 pystray.MenuItem('Historique',
                                  lambda: self.root.after(0, self._open_history)),
                 pystray.Menu.SEPARATOR,
+                pystray.MenuItem('Mon abonnement',
+                                 lambda: self.root.after(0, self._open_subscribe)),
                 pystray.MenuItem('Demarrer avec Windows',
                                  self._toggle_autostart,
                                  checked=lambda _: self._is_autostart()),
                 pystray.Menu.SEPARATOR,
+                pystray.MenuItem('Se deconnecter',
+                                 lambda: self.root.after(0, self._logout)),
                 pystray.MenuItem('Quitter',
                                  lambda: self.root.after(0, self._quit))
             )
@@ -590,7 +1053,7 @@ class VocalType:
         except Exception as ex:
             print(f"Tray non disponible : {ex}")
 
-    # ── Fenêtres ──────────────────────────────────────────────
+    # ── Fenetres ──────────────────────────────────────────────
 
     def _open_settings(self):
         try:
@@ -700,7 +1163,6 @@ class VocalType:
     # ── Enregistrement ────────────────────────────────────────
 
     def _start_recording(self):
-        # Loguer le peripherique audio par defaut pour diagnostic
         try:
             dev = sd.query_devices(kind='input')
             log.info(f"Micro utilise : {dev.get('name','?')} "
@@ -781,7 +1243,7 @@ class VocalType:
             is_speaking = silence_dur < VAD_PAUSE_SEC
 
             if is_speaking and not was_speaking:
-                phrase_start = time.time()   # Debut de phrase
+                phrase_start = time.time()
             if is_speaking:
                 was_speaking = True
 
@@ -804,13 +1266,13 @@ class VocalType:
                         ).start()
 
                 if force_cut:
-                    phrase_start = time.time()   # Continuer a parler, timer remis a zero
+                    phrase_start = time.time()
                 else:
                     was_speaking = False
                     phrase_start = None
 
     def _paste_fast_chunk(self, chunks):
-        """Transcrit et colle une phrase en mode rapide (serialise pour eviter conflits clipboard)."""
+        """Transcrit et colle une phrase en mode rapide."""
         text = self._do_transcribe(chunks)
         if text:
             self.history.add(text)
@@ -834,7 +1296,6 @@ class VocalType:
             rms   = float(np.sqrt(np.mean(audio ** 2)))
             log.info(f"Audio capture : {duree:.1f}s  RMS={rms:.5f}  "
                      f"({'OK' if rms > 0.005 else 'TROP SILENCIEUX - mauvais micro?'})")
-            # Ignorer si audio trop court (moins de 0.4s)
             if len(audio) < SAMPLE_RATE * 0.4:
                 log.warning("Audio trop court (<0.4s), ignore")
                 return None
