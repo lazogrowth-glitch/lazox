@@ -18,6 +18,7 @@ import logging
 import webbrowser
 import urllib.request
 import urllib.error
+import queue as _queue
 from datetime import datetime, timedelta
 
 # ── Instance unique ───────────────────────────────────────────
@@ -286,6 +287,7 @@ class LoginWindow:
         self.active = False
         self.status = 'none'
         self.mode   = 'login'
+        self._q     = _queue.Queue()   # thread-safe : le thread met, le main thread lit
 
         self.win = tk.Toplevel(parent)
         self.win.title("VocalType - Connexion")
@@ -398,9 +400,18 @@ class LoginWindow:
         def _call():
             endpoint = '/register' if self.mode == 'register' else '/login'
             data, code = _api(endpoint, {'email': email, 'password': password})
-            self.win.after(0, lambda: self._handle(data, code, email))
+            self._q.put((data, code, email))   # jamais d'appel tkinter depuis ce thread
 
         threading.Thread(target=_call, daemon=True).start()
+        self.win.after(100, self._poll)   # sondage depuis le main thread
+
+    def _poll(self):
+        """Verifie la queue toutes les 100ms (main thread uniquement)."""
+        try:
+            data, code, email = self._q.get_nowait()
+            self._handle(data, code, email)
+        except _queue.Empty:
+            self.win.after(100, self._poll)
 
     def _handle(self, data, code, email):
         restore_lbl = 'Se connecter' if self.mode == 'login' else 'Creer le compte'
@@ -436,6 +447,7 @@ class SubscribeWindow:
         self.auth   = auth_manager
         self.email  = email or auth_manager.email or ''
         self.result = None   # 'ok' | 'quit'
+        self._q     = _queue.Queue()
 
         self.win = tk.Toplevel(parent)
         self.win.title("VocalType - Abonnement")
@@ -513,9 +525,10 @@ class SubscribeWindow:
 
         def _call():
             data, code = _api('/create-checkout', data={}, token=self.auth.token)
-            self.win.after(0, lambda: self._open_checkout(data, code))
+            self._q.put(('checkout', data, code))
 
         threading.Thread(target=_call, daemon=True).start()
+        self.win.after(100, self._poll)
 
     def _open_checkout(self, data, code):
         self.main_btn.config(state='normal', text="Demarrer l'essai gratuit  ->")
@@ -533,15 +546,27 @@ class SubscribeWindow:
                 "Page Stripe ouverte dans ton navigateur !\n"
                 "Clique sur «J'ai paye» une fois l'abonnement active.")
 
+    def _poll(self):
+        """Verifie la queue toutes les 100ms (main thread)."""
+        try:
+            item = self._q.get_nowait()
+            if item[0] == 'checkout':
+                self._open_checkout(item[1], item[2])
+            elif item[0] == 'check':
+                self._handle_check(item[1], item[2], item[3])
+        except _queue.Empty:
+            self.win.after(100, self._poll)
+
     def _check_sub(self):
         self.check_btn.config(state='disabled', text='Verification...')
         self.status_var.set('')
 
         def _call():
             is_active, status, error = self.auth.check_subscription()
-            self.win.after(0, lambda: self._handle_check(is_active, status, error))
+            self._q.put(('check', is_active, status, error))
 
         threading.Thread(target=_call, daemon=True).start()
+        self.win.after(100, self._poll)
 
     def _handle_check(self, is_active, status, error):
         self.check_btn.config(state='normal',
