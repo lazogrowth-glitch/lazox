@@ -3,3 +3,4 @@ stripe==10.5.0
 PyJWT==2.9.0
 werkzeug==3.0.4
 gunicorn==22.0.0
+flask-cors
