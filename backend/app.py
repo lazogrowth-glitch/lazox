@@ -10,9 +10,11 @@ import stripe
 import jwt
 from datetime import datetime, timedelta
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # ── Config depuis variables d'environnement Railway ───────────
 STRIPE_SECRET_KEY     = os.environ.get('STRIPE_SECRET_KEY', '')
@@ -26,6 +28,9 @@ OPENAI_API_KEY        = os.environ.get('OPENAI_API_KEY', '')
 DEEPGRAM_API_KEY      = os.environ.get('DEEPGRAM_API_KEY', '')
 
 stripe.api_key = STRIPE_SECRET_KEY
+
+# Limite la taille des requetes a 50 Mo (audio base64)
+app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
 
 
 # ── Base de donnees SQLite ─────────────────────────────────────
@@ -69,9 +74,11 @@ def get_current_user():
     try:
         payload = jwt.decode(auth[7:], JWT_SECRET, algorithms=['HS256'])
         db  = get_db()
-        user = db.execute('SELECT * FROM users WHERE id = ?',
-                          (payload['user_id'],)).fetchone()
-        db.close()
+        try:
+            user = db.execute('SELECT * FROM users WHERE id = ?',
+                              (payload['user_id'],)).fetchone()
+        finally:
+            db.close()
         return user
     except Exception:
         return None
@@ -107,18 +114,19 @@ def admin_activate():
         return jsonify({'error': 'Email requis'}), 400
 
     db = get_db()
+    user = db.execute('SELECT email, subscription_status FROM users WHERE email=?',
+                      (email,)).fetchone()
+    if not user:
+        db.close()
+        return jsonify({'error': f'Utilisateur {email} introuvable. Cree le compte dabord.'}), 404
+
     db.execute(
         "UPDATE users SET subscription_status='active', period_end='2099-12-31T00:00:00' WHERE email=?",
         (email,)
     )
     db.commit()
-    user = db.execute('SELECT email, subscription_status, period_end FROM users WHERE email=?',
-                      (email,)).fetchone()
     db.close()
-
-    if not user:
-        return jsonify({'error': f'Utilisateur {email} introuvable. Cree le compte dabord.'}), 404
-    return jsonify({'ok': True, 'email': user['email'], 'status': user['subscription_status']})
+    return jsonify({'ok': True, 'email': email, 'status': 'active'})
 
 
 @app.route('/register', methods=['POST'])
@@ -142,7 +150,7 @@ def register():
         db.commit()
         user  = db.execute('SELECT * FROM users WHERE email = ?', (email,)).fetchone()
         token = make_token(user['id'])
-        return jsonify({'token': token, 'email': email, 'active': False, 'status': 'none'})
+        return jsonify({'token': token, 'email': email, 'active': False, 'status': 'none'}), 201
     except sqlite3.IntegrityError:
         return jsonify({'error': 'Cet email est deja utilise'}), 409
     except Exception as e:
