@@ -22,6 +22,8 @@ STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
 JWT_SECRET            = os.environ.get('JWT_SECRET', 'change-me-in-railway')
 FRONTEND_URL          = os.environ.get('FRONTEND_URL', 'https://lazogrowth-glitch.github.io/lazox')
 DATABASE              = os.environ.get('DATABASE', 'vocaltype.db')
+OPENAI_API_KEY        = os.environ.get('OPENAI_API_KEY', '')
+DEEPGRAM_API_KEY      = os.environ.get('DEEPGRAM_API_KEY', '')
 
 stripe.api_key = STRIPE_SECRET_KEY
 
@@ -245,6 +247,124 @@ def webhook():
 
     db.close()
     return jsonify({'ok': True})
+
+
+@app.route('/transcribe', methods=['POST'])
+def transcribe():
+    """Transcrit un fichier audio WAV via Deepgram Nova-2.
+    Body JSON : { "audio": "<base64 WAV>", "language": "fr"|"en" }
+    Requiert un token JWT valide."""
+    user = get_current_user()
+    if not user:
+        return jsonify({'error': 'Non autorise'}), 401
+    if not is_active(user):
+        return jsonify({'error': 'Abonnement inactif'}), 403
+
+    data     = request.json or {}
+    audio_b64 = data.get('audio', '')
+    language  = data.get('language', 'fr')
+
+    if not audio_b64:
+        return jsonify({'error': 'Audio manquant'}), 400
+    if not DEEPGRAM_API_KEY:
+        return jsonify({'error': 'Cle Deepgram non configuree'}), 500
+
+    try:
+        import base64 as _b64
+        import urllib.request as _ur
+        import json as _json
+
+        audio_bytes = _b64.b64decode(audio_b64)
+
+        payload_dg = _json.dumps({
+            'model':        'nova-2',
+            'language':     language,
+            'smart_format': True,
+            'punctuate':    True,
+        })
+
+        req = _ur.Request(
+            f'https://api.deepgram.com/v1/listen?model=nova-2&language={language}&smart_format=true&punctuate=true',
+            data=audio_bytes,
+            headers={
+                'Authorization': f'Token {DEEPGRAM_API_KEY}',
+                'Content-Type':  'audio/wav',
+            },
+            method='POST'
+        )
+        with _ur.urlopen(req, timeout=30) as r:
+            resp = _json.loads(r.read().decode('utf-8'))
+
+        transcript = (resp.get('results', {})
+                         .get('channels', [{}])[0]
+                         .get('alternatives', [{}])[0]
+                         .get('transcript', '') or '')
+        return jsonify({'transcript': transcript.strip()})
+
+    except Exception as e:
+        return jsonify({'error': f'Erreur Deepgram : {str(e)}'}), 500
+
+
+@app.route('/ai', methods=['POST'])
+def ai_command():
+    """Applique une commande IA sur un texte dicte.
+    Body JSON : { "command": "corrige"|"reformule"|"traduis en anglais", "text": "..." }
+    Requiert un token JWT valide (abonnement actif)."""
+    user = get_current_user()
+    if not user:
+        return jsonify({'error': 'Non autorise'}), 401
+    if not is_active(user):
+        return jsonify({'error': 'Abonnement inactif'}), 403
+
+    data    = request.json or {}
+    command = data.get('command', '').strip().lower()
+    text    = data.get('text', '').strip()
+
+    if not text:
+        return jsonify({'error': 'Texte manquant'}), 400
+    if command not in ('correct', 'rephrase', 'translate_en', 'improve', 'summarize', 'shorten'):
+        return jsonify({'error': f'Commande inconnue : {command}'}), 400
+    if not OPENAI_API_KEY:
+        return jsonify({'error': 'Cle OpenAI non configuree'}), 500
+
+    # Construction du prompt selon la commande
+    prompts = {
+        'correct':      f'Correct all spelling and grammar mistakes in this text. Reply only with the corrected text, no explanation.\n\nText: {text}',
+        'rephrase':     f'Rephrase this text in a clearer and more professional way. Reply only with the rephrased text, no explanation.\n\nText: {text}',
+        'translate_en': f'Translate this text to English. Reply only with the translation, no explanation.\n\nText: {text}',
+        'improve':      f'Improve this text to make it clearer, more engaging and well-structured. Reply only with the improved text, no explanation.\n\nText: {text}',
+        'summarize':    f'Summarize this text concisely in 1-3 sentences. Reply only with the summary, no explanation.\n\nText: {text}',
+        'shorten':      f'Shorten this text while keeping the key ideas. Reply only with the shortened text, no explanation.\n\nText: {text}',
+    }
+
+    try:
+        import urllib.request as _ur
+        import json as _json
+
+        payload = _json.dumps({
+            'model': 'gpt-4.1-mini',
+            'messages': [{'role': 'user', 'content': prompts[command]}],
+            'max_tokens': 500,
+            'temperature': 0.3,
+        }).encode('utf-8')
+
+        req = _ur.Request(
+            'https://api.openai.com/v1/chat/completions',
+            data=payload,
+            headers={
+                'Content-Type':  'application/json',
+                'Authorization': f'Bearer {OPENAI_API_KEY}',
+            },
+            method='POST'
+        )
+        with _ur.urlopen(req, timeout=15) as r:
+            resp = _json.loads(r.read().decode('utf-8'))
+
+        result = resp['choices'][0]['message']['content'].strip()
+        return jsonify({'result': result})
+
+    except Exception as e:
+        return jsonify({'error': f'Erreur OpenAI : {str(e)}'}), 500
 
 
 # ── Lancement ──────────────────────────────────────────────────
