@@ -6,6 +6,8 @@ Raccourci par defaut : Ctrl+Shift+Espace
 """
 
 import os
+import io
+import re
 import sys
 import json
 import time
@@ -15,6 +17,7 @@ import tempfile
 import winreg
 import winsound
 import logging
+import logging.handlers
 import webbrowser
 import urllib.request
 import urllib.error
@@ -30,16 +33,21 @@ try:
     import numpy as np
     import sounddevice as sd
     from scipy.io.wavfile import write as write_wav
-    import speech_recognition as sr
     import pyperclip
     import keyboard
     import tkinter as tk
     from PIL import Image, ImageDraw
     import pystray
 except ImportError as e:
-    print(f"\nERREUR - Module manquant : {e}")
-    print("Lance install.bat pour installer toutes les dependances.")
-    input("\nAppuie sur Entree pour quitter...")
+    import tkinter as tk
+    from tkinter import messagebox
+    _root = tk.Tk()
+    _root.withdraw()
+    messagebox.showerror(
+        "VocalType - Module manquant",
+        f"Module manquant : {e}\n\n"
+        "Lance install.bat pour installer toutes les dependances."
+    )
     sys.exit(1)
 
 # ── Chemins (fonctionne en .py ET en .exe PyInstaller) ────────
@@ -53,14 +61,15 @@ HISTORY_PATH  = os.path.join(_DIR, 'history.json')
 LOG_PATH      = os.path.join(_DIR, 'vocaltype.log')
 AUTH_PATH     = os.path.join(_DIR, 'auth.json')
 
-# ── Logging ───────────────────────────────────────────────────
-logging.basicConfig(
-    filename=LOG_PATH,
-    level=logging.INFO,
-    format='%(asctime)s [%(levelname)s] %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S',
-    encoding='utf-8',
+# ── Logging avec rotation (max 2 Mo, 3 fichiers) ─────────────
+_log_handler = logging.handlers.RotatingFileHandler(
+    LOG_PATH, maxBytes=2*1024*1024, backupCount=3, encoding='utf-8'
 )
+_log_handler.setFormatter(logging.Formatter(
+    '%(asctime)s [%(levelname)s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S'
+))
+logging.getLogger().setLevel(logging.INFO)
+logging.getLogger().addHandler(_log_handler)
 log = logging.getLogger('VocalType')
 
 # ── Constantes ────────────────────────────────────────────────
@@ -71,6 +80,7 @@ _TRANSP           = '#010101'
 VAD_PAUSE_SEC     = 0.35       # Mode rapide : pause de 350ms = fin de phrase naturelle
 VAD_MIN_SEC       = 0.4        # Duree minimale d'audio pour tenter la transcription
 VAD_MAX_SEC       = 3.5        # Duree max avant envoi force (si parole continue)
+PRECISE_BLOCK_SEC = 10         # Mode precis : taille des blocs audio (secondes)
 MAX_HISTORY       = 50
 SILENCE_THRESHOLD = 0.012
 BACKEND_URL       = 'https://lazox-production.up.railway.app'
@@ -83,18 +93,29 @@ _STATES = {
     'ready':      ('#1a1a2e', '#a5b4fc'),
     'idle':       ('#1a1a2e', '#a5b4fc'),
     'recording':  ('#3b0000', '#fca5a5'),
+    'preview':    ('#1a1a3e', '#c4b5fd'),  # Mode rapide : texte provisoire en violet clair
     'processing': ('#2d1a00', '#fde68a'),
     'success':    ('#002d0f', '#86efac'),
     'error':      ('#2d0000', '#fca5a5'),
 }
-_LABELS = {
+_LABELS_FR = {
     'ready':      'VocalType',
     'idle':       'Clic -> Parler  |  Clic droit -> Menu',
     'recording':  'Ecoute...',
     'processing': 'Transcription...',
     'error':      'Erreur - reessaie',
 }
+_LABELS_EN = {
+    'ready':      'VocalType',
+    'idle':       'Click -> Speak  |  Right click -> Menu',
+    'recording':  'Listening...',
+    'processing': 'Transcribing...',
+    'error':      'Error - try again',
+}
+# _LABELS est assigne dynamiquement selon la langue dans VocalType.__init__
+_LABELS = _LABELS_FR  # defaut FR, remplace au lancement
 PW_IDLE  = 260   # Pilule idle plus large pour afficher les instructions
+PW_PREVIEW = 420  # Pilule elargie pour afficher le texte provisoire en mode rapide
 REG_PATH = r'Software\Microsoft\Windows\CurrentVersion\Run'
 
 UI = {
@@ -134,6 +155,235 @@ def _api(endpoint, data=None, token=None):
     except Exception as e:
         log.error(f"API {endpoint} erreur reseau : {e}")
         return None, 0
+
+
+# ── Commandes IA vocales ───────────────────────────────────────
+# Mots-cles detectes au debut de la phrase transcrite
+# Format : 'declencheur vocal' -> 'commande interne'
+_AI_COMMANDS = {
+    # ── Francais ──────────────────────────────────────────────
+    'corrige':              'correct',
+    'corrige ça':           'correct',
+    'corrige ce texte':     'correct',
+    'reformule':            'rephrase',
+    'reformule ça':         'rephrase',
+    'reformule ce texte':   'rephrase',
+    'traduis en anglais':   'translate_en',
+    'améliore':             'improve',
+    'améliore ça':          'improve',
+    'améliore ce texte':    'improve',
+    'résume':               'summarize',
+    'résume ça':            'summarize',
+    'résume ce texte':      'summarize',
+
+    # ── Anglais ───────────────────────────────────────────────
+    'correct':                  'correct',
+    'correct this':             'correct',
+    'fix this':                 'correct',
+    'fix that':                 'correct',
+    'rephrase':                 'rephrase',
+    'rephrase this':            'rephrase',
+    'rewrite':                  'rephrase',
+    'rewrite this':             'rephrase',
+    'translate to english':     'translate_en',
+    'translate into english':   'translate_en',
+    'improve':                  'improve',
+    'improve this':             'improve',
+    'make this better':         'improve',
+    'make it better':           'improve',
+    'make this shorter':        'shorten',
+    'shorten this':             'shorten',
+    'make it shorter':          'shorten',
+    'raccourcis':               'shorten',
+    'raccourcis ça':            'shorten',
+    'summarize':                'summarize',
+    'summarize this':           'summarize',
+    'sum up':                   'summarize',
+}
+
+def _detect_ai_command(text):
+    """Detecte si le texte commence par une commande IA.
+    Retourne (commande, texte_sans_commande) ou (None, text) si pas de commande."""
+    if not text:
+        return None, text
+    lower = text.lower().strip()
+    for trigger, command in sorted(_AI_COMMANDS.items(), key=lambda x: len(x[0]), reverse=True):
+        if lower.startswith(trigger):
+            remaining = text[len(trigger):].strip()
+            remaining = re.sub(r'^[,:\-–]\s*', '', remaining).strip()
+            if remaining:
+                return command, remaining
+    return None, text
+
+
+# ── Commandes d'edition vocale ────────────────────────────────
+# Ces commandes modifient le texte deja presente dans le champ actif
+_EDIT_COMMANDS = {
+    # Anglais
+    'delete last sentence':   'delete_last',
+    'remove last sentence':   'delete_last',
+    'replace last sentence':  'replace_last',
+    # Francais
+    'supprime la dernière phrase':  'delete_last',
+    'efface la dernière phrase':    'delete_last',
+    'remplace la dernière phrase':  'replace_last',
+    'supprime la derniere phrase':  'delete_last',
+    'efface la derniere phrase':    'delete_last',
+    'remplace la derniere phrase':  'replace_last',
+}
+
+def _detect_edit_command(text):
+    """Detecte si le texte commence par une commande d'edition.
+    Retourne (commande, nouveau_texte_ou_None) ou (None, text) si pas de commande.
+    Pour replace_last : retourne le texte de remplacement.
+    Pour delete_last  : retourne None comme payload."""
+    if not text:
+        return None, text
+    lower = text.lower().strip()
+    for trigger, command in sorted(_EDIT_COMMANDS.items(), key=lambda x: len(x[0]), reverse=True):
+        if lower.startswith(trigger):
+            remaining = text[len(trigger):].strip()
+            remaining = re.sub(r'^[,:\-–]\s*', '', remaining).strip()
+            if command == 'replace_last' and not remaining:
+                # replace sans texte de remplacement -> on ignore
+                return None, text
+            return command, remaining or None
+    return None, text
+
+
+# ── Commandes ASK (ouvrir chatbot dans navigateur) ────────────
+_ASK_TARGETS = {
+    # ── ChatGPT (EN) ──────────────────────────────────────────
+    'ask chatgpt':          ('chatgpt',  'https://chatgpt.com'),
+    'ask chat gpt':         ('chatgpt',  'https://chatgpt.com'),
+    'ask gpt':              ('chatgpt',  'https://chatgpt.com'),
+    'ask openai':           ('chatgpt',  'https://chatgpt.com'),
+    'ask chat':             ('chatgpt',  'https://chatgpt.com'),
+    # ── ChatGPT (FR) ──────────────────────────────────────────
+    'demande à chatgpt':    ('chatgpt',  'https://chatgpt.com'),
+    'demande a chatgpt':    ('chatgpt',  'https://chatgpt.com'),
+    'demande à chat gpt':   ('chatgpt',  'https://chatgpt.com'),
+    'demande a chat gpt':   ('chatgpt',  'https://chatgpt.com'),
+    'demande à gpt':        ('chatgpt',  'https://chatgpt.com'),
+    'demande a gpt':        ('chatgpt',  'https://chatgpt.com'),
+    'demande à chat':       ('chatgpt',  'https://chatgpt.com'),
+    'demande a chat':       ('chatgpt',  'https://chatgpt.com'),
+    # ── Claude (EN) ───────────────────────────────────────────
+    'ask claude':           ('claude',   'https://claude.ai'),
+    'ask claude ai':        ('claude',   'https://claude.ai'),
+    # ── Claude (FR) ───────────────────────────────────────────
+    'demande à claude':     ('claude',   'https://claude.ai'),
+    'demande a claude':     ('claude',   'https://claude.ai'),
+    # ── Gemini (EN) ───────────────────────────────────────────
+    'ask gemini':           ('gemini',   'https://gemini.google.com'),
+    'ask google ai':        ('gemini',   'https://gemini.google.com'),
+    'ask google':           ('gemini',   'https://gemini.google.com'),
+    # ── Gemini (FR) ───────────────────────────────────────────
+    'demande à gemini':     ('gemini',   'https://gemini.google.com'),
+    'demande a gemini':     ('gemini',   'https://gemini.google.com'),
+    'demande à google':     ('gemini',   'https://gemini.google.com'),
+    'demande a google':     ('gemini',   'https://gemini.google.com'),
+    # ── DeepSeek (EN) ─────────────────────────────────────────
+    'ask deepseek':         ('deepseek', 'https://chat.deepseek.com'),
+    'ask deep seek':        ('deepseek', 'https://chat.deepseek.com'),
+    'ask deep':             ('deepseek', 'https://chat.deepseek.com'),
+    # ── DeepSeek (FR) ─────────────────────────────────────────
+    'demande à deepseek':   ('deepseek', 'https://chat.deepseek.com'),
+    'demande a deepseek':   ('deepseek', 'https://chat.deepseek.com'),
+    'demande à deep seek':  ('deepseek', 'https://chat.deepseek.com'),
+    'demande a deep seek':  ('deepseek', 'https://chat.deepseek.com'),
+    'demande à deep':       ('deepseek', 'https://chat.deepseek.com'),
+    'demande a deep':       ('deepseek', 'https://chat.deepseek.com'),
+}
+
+# Corrections phonetiques residuelles que Deepgram peut encore rater
+# On garde seulement les variantes plausibles, pas les hacks Google
+_ASK_PHONETIC_FIXES = {
+    # ChatGPT - Deepgram le reconnait bien, mais au cas ou
+    "chat gpt":     'ask chatgpt',
+    "tchat gpt":    'ask chatgpt',
+    # Claude - tres bien reconnu par Deepgram, rien a corriger
+    # Gemini - tres bien reconnu par Deepgram
+    'gemeni':       'ask gemini',
+    # DeepSeek - peut encore poser probleme
+    'deep sik':     'ask deepseek',
+    'deep sec':     'ask deepseek',
+}
+
+def _normalize_ask_text(text):
+    """Normalisation legere pour les commandes ask :
+    - minuscules
+    - suppression ponctuation finale
+    - corrections phonetiques des noms de chatbots
+    PAS de _clean_text() pour eviter l'ajout de point final.
+    Retourne (texte_normalise, longueur_originale_consommee)."""
+    if not text:
+        return text, 0
+    t = text.lower().strip()
+    # Supprimer ponctuation finale seulement
+    t = re.sub(r'[.!?,;:]+$', '', t).strip()
+    # Corrections phonetiques : cherche si le debut correspond
+    for bad, good in sorted(_ASK_PHONETIC_FIXES.items(), key=lambda x: len(x[0]), reverse=True):
+        if t.startswith(bad):
+            # Longueur originale consommee pour le fix
+            return good + t[len(bad):], len(bad)
+    return t, 0
+
+def _detect_ask_command(raw_text):
+    """Detecte si le texte commence par une commande ask/demande.
+    Travaille sur le texte brut (avant _clean_text).
+    Retourne (target_key, url, message) ou (None, None, raw_text)."""
+    if not raw_text:
+        return None, None, raw_text
+    normalized, phonetic_len = _normalize_ask_text(raw_text)
+    # Trier du plus long au plus court pour eviter faux match
+    for trigger, (target, url) in sorted(_ASK_TARGETS.items(), key=lambda x: len(x[0]), reverse=True):
+        if normalized.startswith(trigger):
+            # Calculer combien de chars originaux correspond au trigger
+            if phonetic_len > 0:
+                # Le debut a ete corrige phonetiquement : skip les chars originaux
+                original_skip = phonetic_len
+            else:
+                original_skip = len(trigger)
+            message = raw_text[original_skip:].strip()
+            message = re.sub(r'^[,:\-–]\s*', '', message).strip()
+            # Supprimer ponctuation finale ajoutee par Google
+            message = re.sub(r'[.!?]+$', '', message).strip()
+            if message:
+                log.info(f"[Ask] Commande detectee : {target} | msg={message[:50]!r}")
+                return target, url, message
+    return None, None, raw_text
+
+
+def _remove_last_sentence(text):
+    """Supprime la derniere phrase d'un texte.
+    Gere : ponctuation propre, texte sans ponctuation, abreviations courantes.
+    Retourne le texte sans la derniere phrase, ou '' si une seule phrase."""
+    if not text:
+        return text
+
+    text = text.strip()
+
+    # Abreviations courantes a ne pas confondre avec une fin de phrase
+    _ABBREV = r'(?<!\bMr)(?<!\bMrs)(?<!\bMs)(?<!\bDr)(?<!\bProf)(?<!\bSt)' \
+              r'(?<!\bvs)(?<!\betc)(?<!\bapx)(?<!\bno)'
+
+    # Decouper sur . ! ? suivi d'un espace ou fin, en evitant les abreviations
+    pattern = _ABBREV + r'(?<=[.!?])\s+'
+    sentences = re.split(pattern, text)
+
+    # Nettoyer les segments vides
+    sentences = [s.strip() for s in sentences if s.strip()]
+
+    if len(sentences) <= 1:
+        # Pas de ponctuation propre -> chercher la derniere ligne non vide
+        lines = [l.strip() for l in text.splitlines() if l.strip()]
+        if len(lines) <= 1:
+            return ''
+        return '\n'.join(lines[:-1]).strip()
+
+    result = ' '.join(sentences[:-1]).strip()
+    return result
 
 
 # ── Colle le texte via l'API Windows directement ──────────────
@@ -281,16 +531,18 @@ class AuthManager:
 class LoginWindow:
     """Fenetre de connexion/inscription.  Apres wait_window(), verifier .result."""
 
-    def __init__(self, parent, auth_manager):
+    def __init__(self, parent, auth_manager, lang='fr'):
         self.auth   = auth_manager
+        self.lang   = lang  # 'fr' ou 'en'
         self.result = None   # 'ok' | 'quit'
         self.active = False
         self.status = 'none'
         self.mode   = 'login'
         self._q     = _queue.Queue()   # thread-safe : le thread met, le main thread lit
 
+        _t = self._t  # raccourci
         self.win = tk.Toplevel(parent)
-        self.win.title("VocalType - Connexion")
+        self.win.title(f"VocalType - {_t('Connexion', 'Sign in')}")
         self.win.resizable(False, False)
         self.win.configure(bg=UI['bg'])
         self.win.wm_attributes('-topmost', True)
@@ -301,17 +553,23 @@ class LoginWindow:
         self.win.protocol('WM_DELETE_WINDOW', self._on_close)
         self._build()
 
+    def _t(self, fr, en):
+        """Retourne fr ou en selon la langue configuree."""
+        return en if self.lang == 'en' else fr
+
     def _on_close(self):
         self.result = 'quit'
         self.win.destroy()
 
     def _build(self):
+        t = self._t
         # En-tete
         tk.Label(self.win, text="🎤", bg=UI['bg'], fg=UI['accent'],
                  font=('Segoe UI', 36)).pack(pady=(26, 0))
         tk.Label(self.win, text="VocalType", bg=UI['bg'], fg=UI['text'],
                  font=('Segoe UI', 18, 'bold')).pack()
-        self.subtitle = tk.Label(self.win, text="Connexion a votre compte",
+        self.subtitle = tk.Label(self.win,
+                                  text=t("Connexion a votre compte", "Sign in to your account"),
                                   bg=UI['bg'], fg=UI['text2'],
                                   font=('Segoe UI', 10))
         self.subtitle.pack(pady=(2, 16))
@@ -327,8 +585,9 @@ class LoginWindow:
         self.email_entry.pack(padx=44, pady=(2, 10), fill='x')
         self.email_entry.focus()
 
-        # Mot de passe
-        tk.Label(self.win, text="Mot de passe", bg=UI['bg'], fg=UI['text2'],
+        # Mot de passe / Password
+        tk.Label(self.win, text=t("Mot de passe", "Password"),
+                 bg=UI['bg'], fg=UI['text2'],
                  font=('Segoe UI', 9)).pack(anchor='w', padx=44)
         self.pass_var = tk.StringVar()
         self.pass_entry = tk.Entry(
@@ -345,7 +604,7 @@ class LoginWindow:
                  font=('Segoe UI', 9), wraplength=300).pack(pady=(2, 4))
 
         # Bouton principal
-        self.btn_text = tk.StringVar(value="Se connecter")
+        self.btn_text = tk.StringVar(value=t("Se connecter", "Sign in"))
         self.btn = tk.Button(
             self.win, textvariable=self.btn_text,
             bg=UI['btn'], fg='white',
@@ -356,54 +615,64 @@ class LoginWindow:
 
         # Lien bascule login <-> register
         self.toggle = tk.Label(
-            self.win, text="Pas encore de compte ?  Creer un compte  ->",
+            self.win,
+            text=t("Pas encore de compte ?  Creer un compte  ->",
+                   "No account yet?  Create one  ->"),
             bg=UI['bg'], fg=UI['accent2'],
             font=('Segoe UI', 9), cursor='hand2')
         self.toggle.pack(pady=(4, 0))
         self.toggle.bind('<Button-1>', self._toggle_mode)
 
         # Mention prix
-        tk.Label(self.win, text="7 jours gratuits  *  5 $/mois (CAD) apres l'essai",
+        tk.Label(self.win,
+                 text=t("7 jours gratuits  *  5 $/mois (CAD) apres l'essai",
+                        "7-day free trial  *  $5/month (CAD) after trial"),
                  bg=UI['bg'], fg=UI['text2'],
                  font=('Segoe UI', 8)).pack(pady=(18, 0))
 
     def _toggle_mode(self, _=None):
+        t = self._t
         if self.mode == 'login':
             self.mode = 'register'
-            self.win.title("VocalType - Creer un compte")
-            self.subtitle.config(text="Creer votre compte VocalType")
-            self.btn_text.set("Creer le compte")
-            self.toggle.config(text="Deja un compte ?  Se connecter  ->")
+            self.win.title(f"VocalType - {t('Creer un compte', 'Create account')}")
+            self.subtitle.config(text=t("Creer votre compte VocalType", "Create your VocalType account"))
+            self.btn_text.set(t("Creer le compte", "Create account"))
+            self.toggle.config(text=t("Deja un compte ?  Se connecter  ->",
+                                      "Already have an account?  Sign in  ->"))
         else:
             self.mode = 'login'
-            self.win.title("VocalType - Connexion")
-            self.subtitle.config(text="Connexion a votre compte")
-            self.btn_text.set("Se connecter")
-            self.toggle.config(text="Pas encore de compte ?  Creer un compte  ->")
+            self.win.title(f"VocalType - {t('Connexion', 'Sign in')}")
+            self.subtitle.config(text=t("Connexion a votre compte", "Sign in to your account"))
+            self.btn_text.set(t("Se connecter", "Sign in"))
+            self.toggle.config(text=t("Pas encore de compte ?  Creer un compte  ->",
+                                      "No account yet?  Create one  ->"))
         self.err_var.set('')
 
     def _submit(self):
+        t = self._t
         email    = self.email_var.get().strip().lower()
         password = self.pass_var.get()
 
         if not email or '@' not in email:
-            self.err_var.set("Email invalide")
+            self.err_var.set(t("Email invalide", "Invalid email"))
             return
         if len(password) < 6:
-            self.err_var.set("Mot de passe trop court (min 6 caracteres)")
+            self.err_var.set(t("Mot de passe trop court (min 6 caracteres)",
+                               "Password too short (min 6 characters)"))
             return
 
         self.btn.config(state='disabled')
-        self.btn_text.set('Connexion...' if self.mode == 'login' else 'Creation...')
+        self.btn_text.set(t('Connexion...', 'Signing in...') if self.mode == 'login'
+                          else t('Creation...', 'Creating...'))
         self.err_var.set('')
 
         def _call():
             endpoint = '/register' if self.mode == 'register' else '/login'
             data, code = _api(endpoint, {'email': email, 'password': password})
-            self._q.put((data, code, email))   # jamais d'appel tkinter depuis ce thread
+            self._q.put((data, code, email))
 
         threading.Thread(target=_call, daemon=True).start()
-        self.win.after(100, self._poll)   # sondage depuis le main thread
+        self.win.after(100, self._poll)
 
     def _poll(self):
         """Verifie la queue toutes les 100ms (main thread uniquement)."""
@@ -414,14 +683,17 @@ class LoginWindow:
             self.win.after(100, self._poll)
 
     def _handle(self, data, code, email):
-        restore_lbl = 'Se connecter' if self.mode == 'login' else 'Creer le compte'
+        t = self._t
+        restore_lbl = t('Se connecter', 'Sign in') if self.mode == 'login' \
+                      else t('Creer le compte', 'Create account')
         if code == 0:
-            self.err_var.set("Serveur inaccessible. Verifie ta connexion.")
+            self.err_var.set(t("Serveur inaccessible. Verifie ta connexion.",
+                               "Server unreachable. Check your connection."))
             self.btn.config(state='normal')
             self.btn_text.set(restore_lbl)
             return
         if code not in (200, 201):
-            err = (data or {}).get('error', 'Erreur inconnue')
+            err = (data or {}).get('error', t('Erreur inconnue', 'Unknown error'))
             self.err_var.set(err)
             self.btn.config(state='normal')
             self.btn_text.set(restore_lbl)
@@ -805,15 +1077,29 @@ class VocalType:
         self.audio_data      = []
         self._vad_phrase_buf = []
         self.stream          = None
-        self.recognizer      = sr.Recognizer()
+        
         self.tray            = None
         self._last_sound_t   = time.time()
         self._is_mini        = True
         self._is_ready       = False   # Pilule visible mais pas encore en ecoute
+        # Mode precis : blocs pre-transcrits pendant l'enregistrement
+        self._precise_results      = {}   # index -> texte transcrit
+        self._precise_results_lock = threading.Lock()
+        self._precise_block_idx    = 0    # prochain index de bloc a attribuer
+        self._precise_buf          = []   # buffer courant (chunks en cours d'accumulation)
+        self._precise_buf_dur      = 0.0  # duree accumulee dans le buffer courant (secondes)
+        self._precise_last_words   = []   # derniers mots du bloc precedent (overlap contexte)
+        # Mode rapide : texte confirme (pour detection doublons)
+        self._fast_confirmed       = ''
         self.settings        = Settings()
         self.history         = History()
         self.auth            = AuthManager()
         self._current_hotkey = self.settings.get('hotkey') or DEFAULT_HOTKEY
+
+        # Labels bilingues selon la langue configuree
+        global _LABELS
+        lang = self.settings.get('language') or 'fr-FR'
+        _LABELS = _LABELS_EN if lang.startswith('en') else _LABELS_FR
 
         self._setup_gui()       # GUI d'abord (self.root doit exister avant les Toplevel)
 
@@ -839,21 +1125,23 @@ class VocalType:
         if not self.auth.token:
             return self._run_login_flow()
 
-        # Token present : verifier aupres du backend
+        # Session recente (< 7 jours) -> demarrage direct, pas de verif reseau
+        if self.auth.last_verified:
+            try:
+                age = datetime.utcnow() - datetime.fromisoformat(self.auth.last_verified)
+                if age < timedelta(days=7):
+                    log.info(f"Session valide ({self.auth.email}), demarrage direct")
+                    return True
+            except Exception:
+                pass
+
+        # Verif backend (seulement si > 7 jours sans verif)
         is_active, status, error = self.auth.check_subscription()
 
         if error == 'network':
-            # Mode hors-ligne : autoriser si derniere verification < 48h
-            if self.auth.last_verified:
-                try:
-                    age = datetime.utcnow() - datetime.fromisoformat(self.auth.last_verified)
-                    if age < timedelta(hours=48):
-                        log.info("Backend offline, mode grace (< 48h)")
-                        return True
-                except Exception:
-                    pass
-            # Grace expiree ou jamais verifie -> login
-            return self._run_login_flow()
+            # Backend inaccessible : autoriser si token present
+            log.warning("Backend inaccessible - demarrage offline autorise")
+            return True
 
         if error in ('expired', 'unknown'):
             self.auth.clear()
@@ -869,7 +1157,8 @@ class VocalType:
 
     def _run_login_flow(self):
         """Affiche la fenetre de connexion. Retourne True si auth reussie."""
-        login = LoginWindow(self.root, self.auth)
+        lang = 'en' if (self.settings.get('language') or 'fr').startswith('en') else 'fr'
+        login = LoginWindow(self.root, self.auth, lang=lang)
         self.root.wait_window(login.win)
         if login.result != 'ok':
             return False
@@ -984,7 +1273,12 @@ class VocalType:
     def _go_full(self, text, state):
         """Faire apparaitre la pilule (ecoute / traitement)."""
         sw = self.root.winfo_screenwidth()
-        w  = PW_IDLE if state == 'idle' else PW_FULL
+        if state == 'idle':
+            w = PW_IDLE
+        elif state == 'preview':
+            w = PW_PREVIEW
+        else:
+            w = PW_FULL
         if self._is_mini:
             self.PW, self.PH = w, PH_FULL
             self._is_mini = False
@@ -1099,6 +1393,11 @@ class VocalType:
         self._hw = HistoryWindow(self.root, self.history, _paste_via_winapi)
 
     def _on_settings_saved(self):
+        # Mettre a jour les labels si la langue a change
+        global _LABELS
+        lang = self.settings.get('language') or 'fr-FR'
+        _LABELS = _LABELS_EN if lang.startswith('en') else _LABELS_FR
+
         new_hk = self.settings.get('hotkey') or DEFAULT_HOTKEY
         if new_hk != self._current_hotkey:
             old_hk = self._current_hotkey
@@ -1205,6 +1504,13 @@ class VocalType:
             self.recording     = True
             self.audio_data    = []
             self._last_sound_t = time.time()
+            self._precise_buf     = []
+            self._precise_buf_dur = 0.0
+        # Reset mode precis
+        with self._precise_results_lock:
+            self._precise_results   = {}
+            self._precise_block_idx = 0
+        self._precise_last_words = []
         self._set_status(_LABELS['recording'], 'recording')
         try:
             self.stream = sd.InputStream(
@@ -1220,7 +1526,10 @@ class VocalType:
             return
         if self.settings.get('mode') == 'fast':
             self._vad_phrase_buf = []
+            self._fast_confirmed = ''
             threading.Thread(target=self._vad_loop, daemon=True).start()
+        elif self.settings.get('mode') == 'precise':
+            threading.Thread(target=self._precise_block_loop, daemon=True).start()
         if int(self.settings.get('silence_sec') or 0) > 0:
             threading.Thread(target=self._silence_monitor, daemon=True).start()
 
@@ -1253,9 +1562,13 @@ class VocalType:
     # ── Mode rapide avec VAD (coupe aux pauses naturelles) ────
 
     def _vad_loop(self):
-        """Mode rapide hybride : coupe a la pause naturelle OU apres VAD_MAX_SEC."""
-        was_speaking  = False
-        phrase_start  = None
+        """Mode rapide :
+        - affiche le texte provisoire dans la pilule pendant la parole
+        - colle dans le vrai champ seulement quand le segment est stable (pause 600ms)
+        - detecte et supprime les doublons entre segments"""
+        was_speaking   = False
+        phrase_start   = None
+        last_ui_update = 0.0   # throttle UI : max 1 refresh / 150ms
 
         while self.recording:
             time.sleep(0.05)
@@ -1274,9 +1587,21 @@ class VocalType:
 
             phrase_age  = (time.time() - phrase_start) if phrase_start else 0
             force_cut   = was_speaking and phrase_age >= VAD_MAX_SEC
-            natural_cut = was_speaking and not is_speaking
+            # Coupe naturelle : silence >= 600ms (plus long que VAD_PAUSE_SEC)
+            stable_cut  = was_speaking and silence_dur >= 0.60
 
-            if (force_cut or natural_cut) and self._vad_phrase_buf:
+            # Affichage provisoire dans la pilule (throttle 150ms)
+            if was_speaking and self.recording and (time.time() - last_ui_update > 0.15):
+                buf_preview = list(self._vad_phrase_buf)
+                if buf_preview:
+                    audio_prev = np.concatenate(buf_preview).flatten()
+                    dur_prev   = len(audio_prev) / SAMPLE_RATE
+                    if dur_prev >= 0.5:
+                        secs = max(1, int(dur_prev))
+                        self._set_status(f'Ecoute... {secs}s', 'preview')
+                        last_ui_update = time.time()
+
+            if (force_cut or stable_cut) and self._vad_phrase_buf:
                 with self._audio_lock:
                     phrase = list(self._vad_phrase_buf)
                     self._vad_phrase_buf = []
@@ -1296,25 +1621,349 @@ class VocalType:
                     was_speaking = False
                     phrase_start = None
 
+    @staticmethod
+    def _remove_overlap(confirmed, new_text):
+        """Supprime le chevauchement entre la fin du texte confirme
+        et le debut du nouveau segment.
+        Ex: confirmed='je vais aller au', new='aller au restaurant'
+        -> retourne 'restaurant' (on enleve 'aller au' qui est deja la)"""
+        if not confirmed or not new_text:
+            return new_text
+        # Cherche le plus long suffixe de confirmed qui est prefixe de new_text
+        confirmed_words = confirmed.lower().split()
+        new_words       = new_text.split()
+        max_overlap     = min(6, len(confirmed_words), len(new_words))
+        for n in range(max_overlap, 0, -1):
+            suffix = confirmed_words[-n:]
+            prefix = [w.lower() for w in new_words[:n]]
+            if suffix == prefix:
+                leftover = new_words[n:]
+                return ' '.join(leftover) if leftover else ''
+        return new_text
+
     def _paste_fast_chunk(self, chunks):
-        """Transcrit et colle une phrase en mode rapide."""
+        """Transcrit un segment, affiche dans la pilule, puis colle dans le champ."""
+        # 1. Afficher "transcription..." dans la pilule pendant le traitement
+        self._set_status('Transcription...', 'processing')
+
         text = self._do_transcribe(chunks)
-        if text:
-            self.history.add(text)
-            with self._paste_lock:
-                _paste_via_winapi(text, add_space=True)
-            preview = text[:28] + ('...' if len(text) > 28 else '')
-            self._set_status(f'"{preview}"', 'success')
-            time.sleep(0.8)
+        if not text:
             if self.recording:
                 self._set_status(_LABELS['recording'], 'recording')
+            return
 
-    # ── Transcription (Google Speech) ─────────────────────────
+        # 2. Supprimer les doublons avec le texte deja colle
+        with self._paste_lock:
+            cleaned = self._remove_overlap(self._fast_confirmed, text)
+
+        if not cleaned:
+            if self.recording:
+                self._set_status(_LABELS['recording'], 'recording')
+            return
+
+        # 3. Afficher le segment valide dans la pilule (apercu avant collage)
+        preview = cleaned[:50] + ('...' if len(cleaned) > 50 else '')
+        self._set_status(preview, 'preview')
+        time.sleep(0.25)   # court affichage pour que l'utilisateur voit ce qui va etre colle
+
+        # 4. Coller dans le vrai champ + espace
+        with self._paste_lock:
+            combined = (self._fast_confirmed + ' ' + cleaned).strip()
+            # Garder seulement les 20 derniers mots (les autres sont inutiles pour _remove_overlap)
+            words = combined.split()
+            self._fast_confirmed = ' '.join(words[-20:])
+            _paste_via_winapi(cleaned, add_space=True)
+
+        self.history.add(cleaned)
+        log.info(f"[Rapide] Segment colle : {cleaned[:60]}")
+
+        # 5. Retour a l'ecoute si on enregistre toujours
+        time.sleep(0.3)
+        if self.recording:
+            self._set_status(_LABELS['recording'], 'recording')
+
+    # ── Mode precis avec blocs de 10s envoyes en temps reel ──
+
+    # ── Mode precis avec blocs envoyes en temps reel ──────────
+
+    def _precise_block_loop(self):
+        """Pendant l'enregistrement en mode precis :
+        - mesure la duree reelle via le nombre de frames (pas une estimation)
+        - coupe aux silences naturels pour ne jamais couper un mot
+        - passe un overlap de 3 mots au bloc suivant pour preserver le contexte"""
+        BLOCK_SEC      = PRECISE_BLOCK_SEC   # 10s cible
+        SILENCE_CUT    = 0.6                 # silence min pour couper proprement
+        frames_buf     = 0                   # nombre de frames dans le buffer courant
+        was_speaking   = False
+
+        while self.recording:
+            time.sleep(0.05)
+
+            with self._audio_lock:
+                new_chunks = list(self.audio_data)
+                self.audio_data = []
+                # Compter les vraies frames
+                for c in new_chunks:
+                    frames_buf += len(c)
+                self._precise_buf.extend(new_chunks)
+
+            if not new_chunks:
+                continue
+
+            dur_buf      = frames_buf / SAMPLE_RATE
+            silence_dur  = time.time() - self._last_sound_t
+            is_speaking  = silence_dur < 0.35
+            if is_speaking:
+                was_speaking = True
+
+            # Couper si : duree atteinte ET silence naturel detecte
+            natural_cut = was_speaking and silence_dur >= SILENCE_CUT
+            force_cut   = dur_buf >= BLOCK_SEC + 3.0   # forcer apres 13s max
+
+            if (natural_cut and dur_buf >= 3.0) or force_cut:
+                with self._audio_lock:
+                    block     = list(self._precise_buf)
+                    block_idx = self._precise_block_idx
+                    self._precise_buf     = []
+                    self._precise_buf_dur = 0.0
+                    self._precise_block_idx += 1
+
+                frames_buf   = 0
+                was_speaking = False
+
+                if block:
+                    log.info(f"[Precis] Bloc {block_idx} "
+                             f"({dur_buf:.1f}s, silence={silence_dur:.2f}s) -> Google")
+                    threading.Thread(
+                        target=self._transcribe_precise_block,
+                        args=(block, block_idx),
+                        daemon=True
+                    ).start()
+
+    def _transcribe_precise_block(self, chunks, idx):
+        """Transcrit un bloc audio et stocke le resultat.
+        Utilise _remove_overlap pour supprimer le contexte overlap du debut."""
+        t0   = time.time()
+        text = self._do_transcribe(chunks)
+        dur  = time.time() - t0
+
+        if text:
+            # Supprimer les mots de contexte du bloc precedent s'ils sont au debut
+            cleaned = self._remove_overlap(
+                ' '.join(self._precise_last_words), text
+            ) if self._precise_last_words else text
+            # Mettre a jour les derniers mots pour le prochain bloc
+            words = (cleaned or text).split()
+            self._precise_last_words = words[-3:] if len(words) >= 3 else words
+            result = cleaned or text
+        else:
+            result = ''
+
+        log.info(f"[Precis] Bloc {idx} transcrit en {dur:.1f}s : "
+                 f"{result[:50] or '(vide)'}")
+        with self._precise_results_lock:
+            self._precise_results[idx] = result
+
+    # ── Commandes ASK (chatbot navigateur) ───────────────────────
+
+    def _execute_ask_command(self, target, url, message):
+        """Ouvre le chatbot dans le navigateur, colle le message et envoie Enter."""
+        lang   = self.settings.get('language') or 'fr-FR'
+        is_en  = lang.startswith('en')
+        name   = target.capitalize()
+
+        self._set_status(f'Opening {name}...' if is_en else f'Ouverture {name}...', 'processing')
+        log.info(f"[Ask] Cible={target}  message={message[:50]!r}")
+
+        VK_RETURN       = 0x0D
+        VK_CONTROL      = 0x11
+        VK_V            = 0x56
+        KEYEVENTF_KEYUP = 0x0002
+
+        # 1. Ouvrir l'URL dans le navigateur par defaut
+        try:
+            webbrowser.open(url)
+        except Exception as e:
+            log.error(f"[Ask] Impossible d'ouvrir le navigateur : {e}")
+            err = f"Can't open {name}." if is_en else f"Impossible d'ouvrir {name}."
+            self._set_status(err, 'error')
+            time.sleep(2)
+            self._set_status(_LABELS['ready'], 'ready')
+            return
+
+        # 2. Attendre le chargement de la page
+        # On donne 3.5s pour le premier chargement, moins si deja ouvert
+        log.info(f"[Ask] Attente chargement {url} ...")
+        time.sleep(3.5)
+
+        # 3. Copier le message dans le presse-papiers et coller
+        try:
+            pyperclip.copy(message)
+        except Exception as e:
+            log.error(f"[Ask] Erreur presse-papiers : {e}")
+
+        # Clic simulé pour s'assurer que le focus est dans la page
+        # (l'utilisateur voit la page active, on envoie juste Ctrl+V)
+        time.sleep(0.2)
+        ctypes.windll.user32.keybd_event(VK_CONTROL, 0, 0, 0)
+        ctypes.windll.user32.keybd_event(VK_V,       0, 0, 0)
+        ctypes.windll.user32.keybd_event(VK_V,       0, KEYEVENTF_KEYUP, 0)
+        ctypes.windll.user32.keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0)
+        time.sleep(0.4)
+
+        # 4. Appuyer sur Entree pour envoyer
+        ctypes.windll.user32.keybd_event(VK_RETURN, 0, 0, 0)
+        ctypes.windll.user32.keybd_event(VK_RETURN, 0, KEYEVENTF_KEYUP, 0)
+
+        log.info(f"[Ask] Message envoye a {name}")
+        ok_msg = f'Sent to {name}.' if is_en else f'Envoye a {name}.'
+        self._set_status(ok_msg, 'success')
+        time.sleep(1.5)
+        self._set_status(_LABELS['ready'], 'ready')
+
+    # ── Commandes d'edition vocale ────────────────────────────
+
+    def _execute_edit_command(self, command, payload):
+        """Execute une commande d'edition sur le texte du champ actif.
+        Strategie : Ctrl+A -> Ctrl+C -> modifier -> Ctrl+V (remplace la selection)."""
+        VK_CONTROL      = 0x11
+        VK_A            = 0x41
+        VK_C            = 0x43
+        KEYEVENTF_KEYUP = 0x0002
+
+        lang = self.settings.get('language') or 'fr-FR'
+        is_en = lang.startswith('en')
+
+        # Labels bilingues
+        if command == 'delete_last':
+            status_working = 'Editing: deleting...'   if is_en else 'Edition : suppression...'
+            status_ok      = 'Last sentence deleted.'  if is_en else 'Derniere phrase supprimee.'
+            log.info("[Edit] Commande : delete_last")
+        else:
+            status_working = 'Editing: replacing...'   if is_en else 'Edition : remplacement...'
+            status_ok      = 'Last sentence replaced.'  if is_en else 'Derniere phrase remplacee.'
+            log.info(f"[Edit] Commande : replace_last -> '{(payload or '')[:40]}'")
+
+        self._set_status(status_working, 'processing')
+        time.sleep(0.15)
+
+        # Selectionner tout (Ctrl+A) puis copier (Ctrl+C)
+        # On envoie Ctrl+A deux fois pour couvrir les apps qui ont besoin
+        # d'un double appui (ex: certains champs Notion, Gmail)
+        for _ in range(2):
+            ctypes.windll.user32.keybd_event(VK_CONTROL, 0, 0, 0)
+            ctypes.windll.user32.keybd_event(VK_A,       0, 0, 0)
+            ctypes.windll.user32.keybd_event(VK_A,       0, KEYEVENTF_KEYUP, 0)
+            ctypes.windll.user32.keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0)
+            time.sleep(0.08)
+
+        ctypes.windll.user32.keybd_event(VK_CONTROL, 0, 0, 0)
+        ctypes.windll.user32.keybd_event(VK_C,       0, 0, 0)
+        ctypes.windll.user32.keybd_event(VK_C,       0, KEYEVENTF_KEYUP, 0)
+        ctypes.windll.user32.keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0)
+        time.sleep(0.25)
+
+        # Lire le presse-papiers
+        try:
+            current_text = pyperclip.paste() or ''
+        except Exception:
+            current_text = ''
+
+        if not current_text.strip():
+            err_msg = 'Nothing to edit.' if is_en else 'Rien a modifier.'
+            log.info("[Edit] Champ vide ou Ctrl+A non supporte dans cette app")
+            self._set_status(err_msg, 'error')
+            time.sleep(1.5)
+            self._set_status(_LABELS['ready'], 'ready')
+            return
+
+        # Modifier le texte
+        if command == 'delete_last':
+            new_text = _remove_last_sentence(current_text)
+            log.info(f"[Edit] Avant : ...{current_text[-60:]!r}")
+            log.info(f"[Edit] Apres : ...{new_text[-60:]!r}")
+        else:  # replace_last
+            base     = _remove_last_sentence(current_text)
+            new_text = (base + ' ' + payload).strip() if base else payload
+            if new_text and new_text[-1] not in '.!?…':
+                new_text += '.'
+            log.info(f"[Edit] Remplacement -> ...{new_text[-60:]!r}")
+
+        if new_text == current_text:
+            nothing_msg = 'Nothing changed.' if is_en else 'Aucun changement.'
+            log.info("[Edit] Texte inchange")
+            self._set_status(nothing_msg, 'error')
+            time.sleep(1.5)
+            self._set_status(_LABELS['ready'], 'ready')
+            return
+
+        # Recoller — Ctrl+V remplace la selection (tout le champ)
+        _paste_via_winapi(new_text)
+        log.info("[Edit] Texte recolle avec succes")
+
+        self._set_status(status_ok, 'success')
+        time.sleep(1.5)
+        self._set_status(_LABELS['ready'], 'ready')
+
+    # ── Commandes IA ──────────────────────────────────────────
+
+    def _apply_ai_command(self, command, text):
+        """Envoie le texte au backend Railway pour traitement IA.
+        Retourne le texte transforme ou None si erreur."""
+        log.info(f"[IA] Commande '{command}' sur : {text[:60]}")
+        self._set_status(f'IA : {command}...', 'processing')
+        data, code = _api(
+            '/ai',
+            data={'command': command, 'text': text},
+            token=self.auth.token
+        )
+        if code == 0:
+            log.error("[IA] Backend inaccessible")
+            self._set_status('IA : erreur reseau', 'error')
+            return None
+        if code != 200:
+            err = (data or {}).get('error', f'Erreur {code}')
+            log.error(f"[IA] Erreur backend : {err}")
+            self._set_status(f'IA : {err[:30]}', 'error')
+            return None
+        result = (data or {}).get('result', '').strip()
+        log.info(f"[IA] Resultat : {result[:60]}")
+        return result or None
+
+    # ── Nettoyage minimal du texte transcrit (Deepgram) ─────────
+    # Deepgram gere deja la ponctuation et les noms propres.
+    # On garde uniquement les corrections structurelles légères.
+
+    def _clean_text(self, text, lang):
+        """Nettoyage minimal pour Deepgram :
+        - normalisation des espaces
+        - suppression espace avant ponctuation
+        - majuscule en debut de phrase
+        Deepgram gere deja la ponctuation -> pas de point final force.
+        Pas de suppression de fillers -> risque de deformer le texte."""
+        if not text:
+            return text
+
+        # 1. Normaliser les espaces
+        text = re.sub(r'\s+', ' ', text).strip()
+
+        # 2. Supprimer espace avant ponctuation (artefact rare)
+        text = re.sub(r'\s([,\.!?;:])', r'\1', text)
+
+        if not text:
+            return None
+
+        # 3. Majuscule en debut de phrase
+        text = text[0].upper() + text[1:]
+
+        log.info(f"Texte nettoye : {text[:60]}")
+        return text
+
+    # ── Transcription (Deepgram Nova-2) ───────────────────────
 
     def _do_transcribe(self, audio_chunks):
         if not audio_chunks:
             return None
-        tmp = None
         try:
             audio = np.concatenate(audio_chunks).flatten()
             duree = len(audio) / SAMPLE_RATE
@@ -1324,31 +1973,73 @@ class VocalType:
             if len(audio) < SAMPLE_RATE * 0.4:
                 log.warning("Audio trop court (<0.4s), ignore")
                 return None
+
+            # Encoder en WAV en memoire
             audio_i16 = (np.clip(audio, -1.0, 1.0) * 32767).astype(np.int16)
-            fd, tmp = tempfile.mkstemp(suffix='.wav')
-            os.close(fd)
-            write_wav(tmp, SAMPLE_RATE, audio_i16)
-            lang = self.settings.get('language')
-            with sr.AudioFile(tmp) as source:
-                recorded = self.recognizer.record(source)
-            result = self.recognizer.recognize_google(recorded, language=lang)
-            log.info(f"Transcription OK ({lang}) : {result[:60]}")
+            buf = io.BytesIO()
+            write_wav(buf, SAMPLE_RATE, audio_i16)
+            audio_bytes = buf.getvalue()
+
+            # Langue : fr-FR -> "fr"  |  en-US -> "en"
+            settings_lang = self.settings.get('language') or 'fr-FR'
+            dg_lang = 'fr' if settings_lang.startswith('fr') else 'en'
+
+            # Envoyer l'audio au backend Railway qui appelle Deepgram
+            import base64
+            audio_b64 = base64.b64encode(audio_bytes).decode('utf-8')
+            data, code = _api(
+                '/transcribe',
+                data={'audio': audio_b64, 'language': dg_lang},
+                token=self.auth.token
+            )
+            if code == 0:
+                log.error("Transcription : backend inaccessible")
+                return None
+            if code != 200:
+                log.error(f"Transcription : erreur backend {code}")
+                return None
+
+            result = (data or {}).get('transcript', '').strip()
+            if not result:
+                log.info("Deepgram : aucune parole detectee")
+                return None
+
+            log.info(f"Transcription brute Deepgram ({dg_lang}) : {result[:60]}")
+
+            # Detecter commande d'edition EN PREMIER (avant nettoyage)
+            edit_cmd, edit_payload = _detect_edit_command(result)
+            if edit_cmd:
+                threading.Thread(
+                    target=self._execute_edit_command,
+                    args=(edit_cmd, edit_payload),
+                    daemon=True
+                ).start()
+                return None
+
+            # Detecter commande ASK sur texte brut (pas de _clean_text avant)
+            ask_target, ask_url, ask_msg = _detect_ask_command(result)
+            if ask_target:
+                threading.Thread(
+                    target=self._execute_ask_command,
+                    args=(ask_target, ask_url, ask_msg),
+                    daemon=True
+                ).start()
+                return None
+
+            # Seulement pour dictee normale : nettoyage complet
+            result = self._clean_text(result, settings_lang)
+            if not result:
+                return None
+            # Detecter une commande IA en debut de phrase
+            command, remaining = _detect_ai_command(result)
+            if command:
+                ai_result = self._apply_ai_command(command, remaining)
+                return ai_result if ai_result else remaining
             return result
-        except sr.UnknownValueError:
-            log.info("Google : aucune parole detectee")
-            return None
-        except sr.RequestError as e:
-            log.error(f"Erreur API Google (reseau?) : {e}")
-            return None
+
         except Exception as e:
-            log.error(f"Erreur transcription inattendue : {e}")
+            log.error(f"Erreur transcription : {e}")
             return None
-        finally:
-            if tmp and os.path.exists(tmp):
-                try:
-                    os.unlink(tmp)
-                except Exception:
-                    pass
 
     def _stop_and_transcribe(self):
         with self._audio_lock:
@@ -1356,6 +2047,11 @@ class VocalType:
             chunks               = list(self._vad_phrase_buf) + list(self.audio_data)
             self.audio_data      = []
             self._vad_phrase_buf = []
+            # En mode precis, lire et vider _precise_buf dans le meme lock
+            if self.settings.get('mode') == 'precise':
+                chunks = list(self._precise_buf) + chunks
+                self._precise_buf     = []
+                self._precise_buf_dur = 0.0
 
         if self.stream:
             try:
@@ -1375,15 +2071,62 @@ class VocalType:
             if chunks:
                 text = self._do_transcribe(chunks)
                 if text:
-                    self.history.add(text)
-                    _paste_via_winapi(text, add_space=True)
+                    cleaned = self._remove_overlap(self._fast_confirmed, text)
+                    if cleaned:
+                        self.history.add(cleaned)
+                        _paste_via_winapi(cleaned, add_space=True)
+            self._fast_confirmed = ''
             self._set_status(_LABELS['ready'], 'ready')
             return
 
-        # Mode precis : une seule transcription a la fin
-        self._set_status(_LABELS['processing'], 'processing')
+        # Mode precis : recupere le dernier bloc restant et fusionne avec les resultats
+        self._set_status('Transcription...', 'processing')
+
+        # chunks contient deja _precise_buf (ajoute plus haut) + audio_data
+        # C'est le dernier morceau pas encore envoye
+        if chunks:
+            audio_test = np.concatenate(chunks).flatten()
+            if len(audio_test) / SAMPLE_RATE >= VAD_MIN_SEC:
+                with self._precise_results_lock:
+                    last_idx = self._precise_block_idx
+                    self._precise_block_idx += 1
+                log.info(f"[Precis] Dernier bloc {last_idx} "
+                         f"({len(audio_test)/SAMPLE_RATE:.1f}s) -> envoi Google")
+                threading.Thread(
+                    target=self._transcribe_precise_block,
+                    args=(chunks, last_idx),
+                    daemon=True
+                ).start()
+
+        # Attendre que tous les blocs soient transcrits
+        with self._precise_results_lock:
+            total_blocs = self._precise_block_idx
+        log.info(f"[Precis] Attente de {total_blocs} bloc(s)...")
+        if total_blocs > 1:
+            self._set_status('Fusion...', 'processing')
+
+        deadline = time.time() + 30  # timeout de securite
+        while time.time() < deadline:
+            with self._precise_results_lock:
+                done = len(self._precise_results)
+            if done >= total_blocs:
+                break
+            time.sleep(0.15)
+
+        # Fusionner les resultats dans l'ordre
+        with self._precise_results_lock:
+            results = dict(self._precise_results)
+
+        parts = []
+        for i in range(total_blocs):
+            t = results.get(i, '')
+            if t:
+                parts.append(t)
+
+        text = ' '.join(parts).strip()
+        log.info(f"[Precis] Texte final ({total_blocs} blocs) : {text[:80]}")
+
         try:
-            text = self._do_transcribe(chunks)
             if text:
                 self.history.add(text)
                 _paste_via_winapi(text)
