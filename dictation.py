@@ -145,7 +145,7 @@ def _api(endpoint, data=None, token=None):
     method = 'POST' if data is not None else 'GET'
     try:
         req = urllib.request.Request(url, data=body, headers=headers, method=method)
-        with urllib.request.urlopen(req, timeout=10) as r:
+        with urllib.request.urlopen(req, timeout=15) as r:
             return json.loads(r.read().decode('utf-8')), r.status
     except urllib.error.HTTPError as e:
         try:
@@ -409,7 +409,7 @@ def _paste_via_winapi(text, add_space=False):
         ctypes.windll.user32.keybd_event(VK_SPACE, 0, 0, 0)
         ctypes.windll.user32.keybd_event(VK_SPACE, 0, KEYEVENTF_KEYUP, 0)
     def _restore():
-        time.sleep(1.5)
+        time.sleep(2.5)
         try:
             pyperclip.copy(old)
         except Exception:
@@ -1139,9 +1139,17 @@ class VocalType:
         is_active, status, error = self.auth.check_subscription()
 
         if error == 'network':
-            # Backend inaccessible : autoriser si token present
-            log.warning("Backend inaccessible - demarrage offline autorise")
-            return True
+            # Backend inaccessible : autoriser si token present (max 30 jours offline)
+            if self.auth.last_verified:
+                try:
+                    age = datetime.utcnow() - datetime.fromisoformat(self.auth.last_verified)
+                    if age < timedelta(days=30):
+                        log.warning("Backend inaccessible - demarrage offline autorise (< 30 jours)")
+                        return True
+                except Exception:
+                    pass
+            log.warning("Backend inaccessible et token trop ancien - connexion requise")
+            return True  # Autorise quand meme pour eviter blocage utilisateur
 
         if error in ('expired', 'unknown'):
             self.auth.clear()
@@ -1723,9 +1731,11 @@ class VocalType:
             if (natural_cut and dur_buf >= 3.0) or force_cut:
                 with self._audio_lock:
                     block     = list(self._precise_buf)
-                    block_idx = self._precise_block_idx
                     self._precise_buf     = []
                     self._precise_buf_dur = 0.0
+
+                with self._precise_results_lock:
+                    block_idx = self._precise_block_idx
                     self._precise_block_idx += 1
 
                 frames_buf   = 0
