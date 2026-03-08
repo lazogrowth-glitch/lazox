@@ -365,6 +365,8 @@
     }
     .logo-item:hover { color: var(--text2); }
     .logo-sep { color: var(--border); }
+    .logo-item img, .ai-pill img { width: 18px; height: 18px; object-fit: contain; flex-shrink: 0; filter: grayscale(40%) brightness(0.8); transition: filter 0.2s; border-radius: 3px; }
+    .logo-item:hover img, .ai-pill:hover img { filter: grayscale(0%) brightness(1); }
 
     /* STAT BANNER */
     .stat-banner {
@@ -762,7 +764,7 @@
     <div class="hero-left">
       <div class="hero-badge">
         <div class="badge-dot"></div>
-        Gratuit pendant le lancement
+        Essai gratuit 7 jours
       </div>
 
       <h1>
@@ -778,7 +780,7 @@
       <div class="hero-actions">
         <a class="btn-dl" href="https://github.com/lazogrowth-glitch/lazox/releases/download/v1.1/VocalType_Setup.exe">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17"/></svg>
-          Télécharger — Gratuit
+          Essai gratuit 7 jours
         </a>
         <a class="btn-ghost" href="#how">
           Voir comment ça marche
@@ -848,27 +850,27 @@
   <!-- LOGOS BAND -->
   <div class="logos-band">
     <div class="logos-track">
-      <span class="logo-item">🤖 ChatGPT</span><span class="logo-sep">·</span>
-      <span class="logo-item">✦ Claude</span><span class="logo-sep">·</span>
-      <span class="logo-item">♊ Gemini</span><span class="logo-sep">·</span>
-      <span class="logo-item">🪟 Copilot</span><span class="logo-sep">·</span>
-      <span class="logo-item">🔥 Perplexity</span><span class="logo-sep">·</span>
-      <span class="logo-item">🌊 DeepSeek</span><span class="logo-sep">·</span>
-      <span class="logo-item">🦙 Mistral</span><span class="logo-sep">·</span>
-      <span class="logo-item">📝 Notion AI</span><span class="logo-sep">·</span>
-      <span class="logo-item">💼 Gmail</span><span class="logo-sep">·</span>
-      <span class="logo-item">💬 Discord</span><span class="logo-sep">·</span>
+      <span class="logo-item"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/openai.svg" style="filter:invert(1) grayscale(40%) brightness(0.8);" alt="ChatGPT"> ChatGPT</span><span class="logo-sep">·</span>
+      <span class="logo-item"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/anthropic.svg" style="filter:invert(1) grayscale(40%) brightness(0.8);" alt="Claude"> Claude</span><span class="logo-sep">·</span>
+      <span class="logo-item"><img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg" alt="Gemini"> Gemini</span><span class="logo-sep">·</span>
+      <span class="logo-item"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/microsoftcopilot.svg" style="filter:invert(1) grayscale(40%) brightness(0.8);" alt="Copilot"> Copilot</span><span class="logo-sep">·</span>
+      <span class="logo-item"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/perplexity.svg" style="filter:invert(1) grayscale(40%) brightness(0.8);" alt="Perplexity"> Perplexity</span><span class="logo-sep">·</span>
+      <span class="logo-item"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/deepseek.svg" style="filter:invert(1) grayscale(40%) brightness(0.8);" alt="DeepSeek"> DeepSeek</span><span class="logo-sep">·</span>
+      <span class="logo-item"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/mistral.svg" style="filter:invert(1) grayscale(40%) brightness(0.8);" alt="Mistral"> Mistral</span><span class="logo-sep">·</span>
+      <span class="logo-item"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/notion.svg" style="filter:invert(1) grayscale(40%) brightness(0.8);" alt="Notion AI"> Notion AI</span><span class="logo-sep">·</span>
+      <span class="logo-item"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/discord.svg" style="filter:invert(1) grayscale(40%) brightness(0.8);" alt="Discord"> Discord</span><span class="logo-sep">·</span>
+      <span class="logo-item"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/gmail.svg" style="filter:grayscale(40%) brightness(0.8);" alt="Gmail"> Gmail</span><span class="logo-sep">·</span>
       <!-- duplicate for seamless loop -->
-      <span class="logo-item">🤖 ChatGPT</span><span class="logo-sep">·</span>
-      <span class="logo-item">✦ Claude</span><span class="logo-sep">·</span>
-      <span class="logo-item">♊ Gemini</span><span class="logo-sep">·</span>
-      <span class="logo-item">🪟 Copilot</span><span class="logo-sep">·</span>
-      <span class="logo-item">🔥 Perplexity</span><span class="logo-sep">·</span>
-      <span class="logo-item">🌊 DeepSeek</span><span class="logo-sep">·</span>
-      <span class="logo-item">🦙 Mistral</span><span class="logo-sep">·</span>
-      <span class="logo-item">📝 Notion AI</span><span class="logo-sep">·</span>
-      <span class="logo-item">💼 Gmail</span><span class="logo-sep">·</span>
-      <span class="logo-item">💬 Discord</span><span class="logo-sep">·</span>
+      <span class="logo-item"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/openai.svg" style="filter:invert(1) grayscale(40%) brightness(0.8);" alt="ChatGPT"> ChatGPT</span><span class="logo-sep">·</span>
+      <span class="logo-item"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/anthropic.svg" style="filter:invert(1) grayscale(40%) brightness(0.8);" alt="Claude"> Claude</span><span class="logo-sep">·</span>
+      <span class="logo-item"><img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg" alt="Gemini"> Gemini</span><span class="logo-sep">·</span>
+      <span class="logo-item"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/microsoftcopilot.svg" style="filter:invert(1) grayscale(40%) brightness(0.8);" alt="Copilot"> Copilot</span><span class="logo-sep">·</span>
+      <span class="logo-item"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/perplexity.svg" style="filter:invert(1) grayscale(40%) brightness(0.8);" alt="Perplexity"> Perplexity</span><span class="logo-sep">·</span>
+      <span class="logo-item"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/deepseek.svg" style="filter:invert(1) grayscale(40%) brightness(0.8);" alt="DeepSeek"> DeepSeek</span><span class="logo-sep">·</span>
+      <span class="logo-item"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/mistral.svg" style="filter:invert(1) grayscale(40%) brightness(0.8);" alt="Mistral"> Mistral</span><span class="logo-sep">·</span>
+      <span class="logo-item"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/notion.svg" style="filter:invert(1) grayscale(40%) brightness(0.8);" alt="Notion AI"> Notion AI</span><span class="logo-sep">·</span>
+      <span class="logo-item"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/discord.svg" style="filter:invert(1) grayscale(40%) brightness(0.8);" alt="Discord"> Discord</span><span class="logo-sep">·</span>
+      <span class="logo-item"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/gmail.svg" style="filter:grayscale(40%) brightness(0.8);" alt="Gmail"> Gmail</span><span class="logo-sep">·</span>
     </div>
   </div>
 
@@ -883,8 +885,8 @@
       <div class="stat-label">pour installer<br>VocalType</div>
     </div>
     <div class="stat-item reveal reveal-d2">
-      <div class="stat-num"><span class="accent">0</span></div>
-      <div class="stat-label">compte requis.<br>Zéro friction.</div>
+      <div class="stat-num"><span class="accent">7</span>j</div>
+      <div class="stat-label">d'essai gratuit.<br>Sans carte bancaire.</div>
     </div>
   </div>
 
@@ -893,7 +895,7 @@
     <div>
       <div class="section-tag reveal">Comment ça marche</div>
       <h2 class="reveal reveal-d1">30 secondes<br>pour démarrer</h2>
-      <p class="section-sub reveal reveal-d2">Pas de configuration. Pas de compte. Juste votre voix et vos IA préférées.</p>
+      <p class="section-sub reveal reveal-d2">Créez votre compte en 30 secondes, installez l'app, et vous êtes prêt. Votre raccourci, vos règles.</p>
 
       <div class="steps-list">
         <div class="step-row reveal">
@@ -913,9 +915,10 @@
         <div class="step-row reveal reveal-d2">
           <div class="step-num-badge">03</div>
           <div class="step-content">
-            <h3>Activez avec le raccourci</h3>
-            <p>Cliquez dans le champ de texte puis appuyez sur :</p>
+            <h3>Activez avec votre raccourci</h3>
+            <p>Cliquez dans le champ de texte puis appuyez sur votre raccourci. Par défaut :</p>
             <div class="kbd">Ctrl + Shift + Espace</div>
+            <p style="margin-top:8px; font-size:0.82rem; color:var(--gold);">⚙️ Raccourci 100% personnalisable dans les paramètres</p>
           </div>
         </div>
         <div class="step-row reveal reveal-d3">
@@ -990,14 +993,15 @@
         <p>50 dernières dictées accessibles. Recollez un prompt précédent en un clic.</p>
       </div>
       <div class="feat-card reveal reveal-d2">
-        <div class="feat-icon">🇫🇷</div>
-        <h3>FR & EN</h3>
-        <p>Dictez en français ou en anglais. Changez de langue en 2 clics dans les paramètres.</p>
+        <div class="feat-icon">⌨️</div>
+        <h3>Raccourci personnalisable</h3>
+        <p>Changez le raccourci clavier selon vos habitudes. Tout configurable en 2 clics dans les paramètres de l'app.</p>
+        <span class="feat-tag">Votre touche</span>
       </div>
       <div class="feat-card reveal reveal-d3">
         <div class="feat-icon">🔒</div>
         <h3>Privé par design</h3>
-        <p>Aucun compte. Vos données restent sur votre PC. Audio traité par Google Speech, jamais par nos serveurs.</p>
+        <p>Compte email simple requis. Vos données restent sur votre PC. Audio traité par Google Speech, jamais stocké sur nos serveurs.</p>
       </div>
     </div>
   </section>
@@ -1010,31 +1014,29 @@
 
     <div class="ai-marquee-wrap" style="margin-top: 48px;">
       <div class="ai-marquee">
-        <div class="ai-pill">🤖 ChatGPT</div>
-        <div class="ai-pill">✦ Claude</div>
-        <div class="ai-pill">♊ Google Gemini</div>
-        <div class="ai-pill">🪟 Microsoft Copilot</div>
-        <div class="ai-pill">🔥 Perplexity AI</div>
-        <div class="ai-pill">🌊 DeepSeek</div>
-        <div class="ai-pill">🦙 Mistral / Le Chat</div>
-        <div class="ai-pill">📝 Notion AI</div>
-        <div class="ai-pill">💼 Gmail</div>
-        <div class="ai-pill">💬 Discord</div>
-        <div class="ai-pill">📄 Word</div>
-        <div class="ai-pill">🔎 Phind</div>
+        <div class="ai-pill"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/openai.svg" style="filter:invert(1);" alt=""> ChatGPT</div>
+        <div class="ai-pill"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/anthropic.svg" style="filter:invert(1);" alt=""> Claude</div>
+        <div class="ai-pill"><img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg" alt=""> Google Gemini</div>
+        <div class="ai-pill"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/microsoftcopilot.svg" style="filter:invert(1);" alt=""> Copilot</div>
+        <div class="ai-pill"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/perplexity.svg" style="filter:invert(1);" alt=""> Perplexity AI</div>
+        <div class="ai-pill"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/deepseek.svg" style="filter:invert(1);" alt=""> DeepSeek</div>
+        <div class="ai-pill"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/mistral.svg" style="filter:invert(1);" alt=""> Mistral</div>
+        <div class="ai-pill"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/notion.svg" style="filter:invert(1);" alt=""> Notion AI</div>
+        <div class="ai-pill"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/gmail.svg" alt=""> Gmail</div>
+        <div class="ai-pill"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/discord.svg" style="filter:invert(1);" alt=""> Discord</div>
+        <div class="ai-pill"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/microsoftword.svg" style="filter:invert(1);" alt=""> Word</div>
         <!-- duplicate -->
-        <div class="ai-pill">🤖 ChatGPT</div>
-        <div class="ai-pill">✦ Claude</div>
-        <div class="ai-pill">♊ Google Gemini</div>
-        <div class="ai-pill">🪟 Microsoft Copilot</div>
-        <div class="ai-pill">🔥 Perplexity AI</div>
-        <div class="ai-pill">🌊 DeepSeek</div>
-        <div class="ai-pill">🦙 Mistral / Le Chat</div>
-        <div class="ai-pill">📝 Notion AI</div>
-        <div class="ai-pill">💼 Gmail</div>
-        <div class="ai-pill">💬 Discord</div>
-        <div class="ai-pill">📄 Word</div>
-        <div class="ai-pill">🔎 Phind</div>
+        <div class="ai-pill"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/openai.svg" style="filter:invert(1);" alt=""> ChatGPT</div>
+        <div class="ai-pill"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/anthropic.svg" style="filter:invert(1);" alt=""> Claude</div>
+        <div class="ai-pill"><img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg" alt=""> Google Gemini</div>
+        <div class="ai-pill"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/microsoftcopilot.svg" style="filter:invert(1);" alt=""> Copilot</div>
+        <div class="ai-pill"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/perplexity.svg" style="filter:invert(1);" alt=""> Perplexity AI</div>
+        <div class="ai-pill"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/deepseek.svg" style="filter:invert(1);" alt=""> DeepSeek</div>
+        <div class="ai-pill"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/mistral.svg" style="filter:invert(1);" alt=""> Mistral</div>
+        <div class="ai-pill"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/notion.svg" style="filter:invert(1);" alt=""> Notion AI</div>
+        <div class="ai-pill"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/gmail.svg" alt=""> Gmail</div>
+        <div class="ai-pill"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/discord.svg" style="filter:invert(1);" alt=""> Discord</div>
+        <div class="ai-pill"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/microsoftword.svg" style="filter:invert(1);" alt=""> Word</div>
       </div>
     </div>
   </section>
@@ -1086,33 +1088,34 @@
     <div class="pricing-inner">
       <div class="pricing-copy reveal">
         <div class="section-tag">Tarif</div>
-        <h2>Gratuit.<br>Pour toujours ?</h2>
-        <p>Pendant la période de lancement, VocalType est entièrement gratuit. Toutes les fonctionnalités. Aucune limite. Aucune carte.</p>
+        <h2>7 jours gratuits.<br>Puis décidez.</h2>
+        <p>Essayez VocalType gratuitement pendant 7 jours. Toutes les fonctionnalités débloquées. Aucune carte bancaire requise pour commencer.</p>
         <div class="vs-list">
-          <div class="vs-row"><span class="vs-check">✓</span> Wispr Flow coûte $14/mois — VocalType : $0</div>
-          <div class="vs-row"><span class="vs-check">✓</span> Pas de compte nécessaire contrairement aux concurrents</div>
+          <div class="vs-row"><span class="vs-check">✓</span> Wispr Flow coûte $14/mois — essayez VocalType gratuitement 7 jours</div>
+          <div class="vs-row"><span class="vs-check">✓</span> Raccourci 100% personnalisable selon vos habitudes</div>
           <div class="vs-row"><span class="vs-check">✓</span> Données 100% locales, jamais sur nos serveurs</div>
           <div class="vs-row"><span class="vs-check">✓</span> Fonctionne partout sur Windows, pas seulement dans le browser</div>
         </div>
       </div>
       <div class="price-card reveal reveal-d1">
-        <div class="price-badge">🎉 Lancement</div>
-        <div class="price-amount"><span>$</span>0<sub>/mois</sub></div>
-        <p class="price-note">Profitez pendant le lancement — prix susceptible de changer</p>
+        <div class="price-badge">🎉 7 Jours Gratuits</div>
+        <div class="price-amount"><span>$</span>0<sub>/7 jours</sub></div>
+        <p class="price-note">Puis continuez au tarif de lancement — sans surprise</p>
         <ul class="price-features">
           <li><div class="check">✓</div> Dictée illimitée dans toutes les IA</li>
           <li><div class="check">✓</div> Compatible toutes applications Windows</li>
           <li><div class="check">✓</div> Mode précis + Mode rapide (BETA)</li>
           <li><div class="check">✓</div> Historique 50 dictées</li>
+          <li><div class="check">✓</div> Raccourci personnalisable</li>
           <li><div class="check">✓</div> Français & Anglais</li>
           <li><div class="check">✓</div> Mises à jour incluses</li>
-          <li><div class="check">✓</div> Aucun compte requis</li>
+          <li><div class="check">✓</div> Compte requis (email seulement)</li>
         </ul>
         <a class="btn-dl-full" href="https://github.com/lazogrowth-glitch/lazox/releases/download/v1.1/VocalType_Setup.exe">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17"/></svg>
-          Télécharger maintenant — Gratuit
+          Démarrer l'essai gratuit — 7 jours
         </a>
-        <p class="price-compat">Windows 10 & 11 · ~15 MB · 10 secondes</p>
+        <p class="price-compat">Windows 10 & 11 · ~15 MB · Aucune carte requise</p>
       </div>
     </div>
   </section>
