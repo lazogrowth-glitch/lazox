@@ -257,7 +257,30 @@ footer{border-top:1px solid var(--border);padding:32px 40px;display:flex;align-i
  <button class="lb" onclick="setLang('fr')">FR</button>
 </div>
 <nav>
- <a class="nlogo" href="#"><img src="data:image/png;base64,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" alt="VocalType" style="height:32px;width:32px;border-radius:7px;vertical-align:middle;margin-right:8px;display:inline-block">Vocal<em>Type</em></a>
+ <a class="nlogo" href="#"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="32" height="32" style="vertical-align:middle;margin-right:8px;flex-shrink:0;border-radius:7px">
+  <defs>
+    <linearGradient id="lg1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f0d070"/>
+      <stop offset="100%" stop-color="#c9a84c"/>
+    </linearGradient>
+  </defs>
+  <!-- Fond noir -->
+  <rect width="100" height="100" rx="18" fill="#0a0a0a"/>
+  <!-- Corps mic blanc -->
+  <rect x="37" y="12" width="26" height="38" rx="13" fill="white"/>
+  <!-- Arc doré sous le mic -->
+  <path d="M20 46 Q20 72 50 72 Q80 72 80 46" fill="none" stroke="url(#lg1)" stroke-width="6" stroke-linecap="round"/>
+  <!-- Pied vertical -->
+  <line x1="50" y1="72" x2="50" y2="82" stroke="url(#lg1)" stroke-width="6" stroke-linecap="round"/>
+  <!-- Barre horizontale du pied -->
+  <line x1="36" y1="82" x2="64" y2="82" stroke="url(#lg1)" stroke-width="6" stroke-linecap="round"/>
+  <!-- Onde 1 (proche) -->
+  <path d="M67 28 A12 12 0 0 1 67 42" fill="none" stroke="url(#lg1)" stroke-width="5.5" stroke-linecap="round" opacity="1"/>
+  <!-- Onde 2 -->
+  <path d="M73 22 A20 20 0 0 1 73 48" fill="none" stroke="url(#lg1)" stroke-width="5" stroke-linecap="round" opacity="0.7"/>
+  <!-- Onde 3 -->
+  <path d="M79 16 A28 28 0 0 1 79 54" fill="none" stroke="url(#lg1)" stroke-width="4.5" stroke-linecap="round" opacity="0.4"/>
+</svg>Vocal<em>Type</em></a>
  <div class="nlinks">
  <a href="#how" data-t="n_how">How it works</a>
  <a href="#pricing" data-t="n_price">Pricing</a>
@@ -601,7 +624,30 @@ footer{border-top:1px solid var(--border);padding:32px 40px;display:flex;align-i
  <p class="cta-note">Windows 10 & 11 · ~15 MB · Account required (email only)</p>
 </section>
 <footer>
- <div class="flogo"><img src="data:image/png;base64,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" alt="" style="height:22px;width:22px;border-radius:5px;vertical-align:middle;margin-right:7px;display:inline-block">Vocal<em>Type</em></div>
+ <div class="flogo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="24" height="24" style="vertical-align:middle;margin-right:7px;flex-shrink:0;border-radius:7px">
+  <defs>
+    <linearGradient id="lg1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f0d070"/>
+      <stop offset="100%" stop-color="#c9a84c"/>
+    </linearGradient>
+  </defs>
+  <!-- Fond noir -->
+  <rect width="100" height="100" rx="18" fill="#0a0a0a"/>
+  <!-- Corps mic blanc -->
+  <rect x="37" y="12" width="26" height="38" rx="13" fill="white"/>
+  <!-- Arc doré sous le mic -->
+  <path d="M20 46 Q20 72 50 72 Q80 72 80 46" fill="none" stroke="url(#lg1)" stroke-width="6" stroke-linecap="round"/>
+  <!-- Pied vertical -->
+  <line x1="50" y1="72" x2="50" y2="82" stroke="url(#lg1)" stroke-width="6" stroke-linecap="round"/>
+  <!-- Barre horizontale du pied -->
+  <line x1="36" y1="82" x2="64" y2="82" stroke="url(#lg1)" stroke-width="6" stroke-linecap="round"/>
+  <!-- Onde 1 (proche) -->
+  <path d="M67 28 A12 12 0 0 1 67 42" fill="none" stroke="url(#lg1)" stroke-width="5.5" stroke-linecap="round" opacity="1"/>
+  <!-- Onde 2 -->
+  <path d="M73 22 A20 20 0 0 1 73 48" fill="none" stroke="url(#lg1)" stroke-width="5" stroke-linecap="round" opacity="0.7"/>
+  <!-- Onde 3 -->
+  <path d="M79 16 A28 28 0 0 1 79 54" fill="none" stroke="url(#lg1)" stroke-width="4.5" stroke-linecap="round" opacity="0.4"/>
+</svg>Vocal<em>Type</em></div>
  <div class="flinks">
  <a href="https://github.com/lazogrowth-glitch/lazox">GitHub</a>
  <a href="#how" data-t="n_how">How it works</a>
