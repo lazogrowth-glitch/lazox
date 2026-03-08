@@ -1,564 +1,758 @@
 <!DOCTYPE html>
-<html lang="en" id="html-root">
+<html lang="en" id="root">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>VocalType — Speak to AI instead of typing</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
-  <style>
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    :root{--black:#050508;--surface:#0c0c12;--surface2:#12121c;--border:rgba(255,255,255,0.07);--ba:rgba(255,220,100,0.25);--gold:#f5c842;--gold2:#fde68a;--gd:rgba(245,200,66,0.15);--text:#f0ede8;--text2:rgba(240,237,232,0.5);--text3:rgba(240,237,232,0.25);--green:#4ade80}
-    html{scroll-behavior:smooth}
-    body{font-family:'DM Sans',sans-serif;background:var(--black);color:var(--text);overflow-x:hidden}
-    body::before{content:'';position:fixed;inset:0;z-index:1;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;opacity:.4}
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>VocalType — Speak your prompts to ChatGPT, Claude & Gemini</title>
+<meta name="description" content="Dictate prompts to ChatGPT, Claude, Gemini and any Windows app with one shortcut. 7-day free trial."/>
+<link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAFiUlEQVR4nOWWXYhV1xmGn7XW3vvsfX5mzpgZSUZlMiaWUfzpjTcShMRSFCzSBJKUdqjUtgRpmZY25KaFXIReJJYqyaRBpLSgobkwIhS00giJmjQNtpnMFCWxSQeNI87/nHNm73P23uvLxXEmHXtmRkdDLrJgXe0F7/Ot9/vevVQ2mxW+xKW/TPGvBMCi9t4RgFIKpdT86oJaDGLJAMYYkiQhjmOMMXNAlEKUAs9V09bKghBLAlBKUSqVyOfztLa2UiqVSNP0xo0gtZpVaSrhyYM7nt7wtZY340SUUti7AqCUIgxDenp66OvrY2BggN7eXlzXxVpLkqJW3ZcvffsbHddefu3i5n+c7X6xfXnwUZKIbgRxWwDGGKanp+nu7mb//v2sWLGClpYW9u7dy759+4iiSOLY0r48X3n1d9vOXx+tbD944F9rvrvzgeNWGrugbieItNaUy2XOnDnDli1bSNMUYwwiQq0a0XZvB7/6cZckiVX/HQr/veexB673/Obd7J/3PXxw8+PHfjsd2aJWCDDbMEvqgSRJ0FqjtUYphTGGOI5xHM27Hwzzo8fXMnS93JnLZcLAU8uHJ2tOS7M/ZK2g1NyGXHIT3rwEhe8Z/vb2ZTU2ldCUd7zx8arJZV0mJ2tu1ndKjVy4q0GUpkJT3iPrG6JqKq5rJKqmRitE67s0BQDSoBSlhLCa8osfbJLh0TJhVcbblnkyHaXRg51N06MT1ft0g8xyFhIyRoFAaucKOo6DtRZrLUoprLUY45LxNMdO/YdT5z4Nf7574/tHT15a1b48d/7CR2PF0fHqSmMUInOLnvcGRKBUqlIq15ixfCZ6Dx06hNYa13XRWmOM4ciRI0xOjMjZ89dVJUzGm/PaOfrGFe/13u3Hnv/DBw8nqZiGYZTNZuXmHQRZaW7KyU+7N8n3H90orudLLlf/lsvlRGstPT09cuXKFRkbG5Pe3l4pFAri+4EUCnkbBIG031ucPPbyrh9+eOI7v75/5bLQ9Xyby2XtzVr/Z4FS9WbKuA5P71nPh5dr/On1C/gZQ5oKIkIQBBw4cIDDhw+TyWS4evUqvu9jjCFNrdJaMTwWBXGS7KxE8SPWig9z539BC5RS1BLLpcEp7mnO0FIMiGM7a4WIUCgUKJfLjIyMUCgUZgNppoBc4Lkbu9p2VcK4MFGuidGNWrABgAi4rmJissq5f15j7eoCOx/pJIpqGP358TRNcRwH13VJ03R2MozWRFGNb23r5P52357++1WZKsXKdRW3nAMioLXi5NkhRkZLPPXkOryMR5yk9cmYPSdzRtIYRZykeBmPp55cx8hoWf/13JDSiobi8wJYKwSByzt9wxw/Pci61VleeOYhwjChXIlxjMYYhdb1bYzCMZpyJSYME1545iHWrc5y/PQg7/QNEwQu1jYmWCAHBMdonnuln/UPFtnzaCf5rMP+P75P/8XhG2dUva1ulLehq42f7f46T2xfxfn+IZ57pR/HaBZ6FC34N9RaEUYJXZ3NPPuTTezY2kEp1Bx/Y5ATbw0yPlUjtUJrMcOOrR3s2tZBIbCceGuQZ1/q4+InkwS+M2/1iwLMQFSmE5oKLt/b2clj3+xg09o28rmAqXKVOLbc0+JTLkf0XRzm6KlBDv/lE6ZKMbnswuK3BDADkaSWKExoKfpsXr+MzhV5NqxpJvA17/WP8/GnZd4bGGN8IsIPHByjFxW/ZQCoB5TWilpsqUYJELN180o2rCnS++oA4OJlHDJeXXi+rr8jgHrAOPxydxd+xtCUd8kFDpevVcj6Dr9/7RIXPp7EzzgN/5h3BPC/IK3FzI2ZF6wVPFejgLGpGtXa54n5hQAAxIlFpA6jUMw8OF1H35Y4LPIemG957s35VVe9Vd/vGGApQvOtzwByd4JPFzREMwAAAABJRU5ErkJggg=="/>
+<meta property="og:title" content="VocalType — Speak your prompts to ChatGPT"/>
+<meta property="og:description" content="One shortcut. Dictate into ChatGPT, Claude, Gemini and every Windows app. 4× faster than typing."/>
+<meta property="og:type" content="website"/>
+<meta name="twitter:card" content="summary"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;700;800;900&family=Instrument+Sans:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
-    /* LANG BAR */
-    .lang-bar{position:fixed;top:0;left:0;right:0;z-index:200;background:rgba(5,5,8,.97);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:flex-end;padding:5px 40px;gap:4px;height:34px}
-    .lang-btn{background:none;border:1px solid var(--border);color:var(--text3);font-size:.68rem;font-weight:700;letter-spacing:.07em;padding:2px 7px;border-radius:4px;cursor:pointer;transition:all .2s;font-family:'Syne',sans-serif}
-    .lang-btn:hover{color:var(--text2);border-color:rgba(255,255,255,.15)}
-    .lang-btn.active{background:var(--gd);border-color:var(--ba);color:var(--gold2)}
+:root{
+  --ink:#0a0a0a;
+  --ink2:#3a3a3a;
+  --ink3:#8a8a8a;
+  --paper:#f5f2ed;
+  --paper2:#ede9e2;
+  --paper3:#e4dfd6;
+  --gold:#c9a84c;
+  --gold-lt:#f0d080;
+  --green:#1a7a4a;
+  --border:#d8d2c8;
+  --r:12px;
+}
 
-    /* NAV */
-    nav{position:fixed;top:34px;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 40px;height:62px;background:rgba(5,5,8,.88);backdrop-filter:blur(28px);border-bottom:1px solid var(--border)}
-    .nav-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.12rem;letter-spacing:-.5px;color:var(--text)}
-    .nav-logo span{color:var(--gold)}
-    .nav-links{display:flex;gap:30px;align-items:center}
-    .nav-links a{font-size:.84rem;color:var(--text2);text-decoration:none;transition:color .2s}
-    .nav-links a:hover{color:var(--text)}
-    .nav-cta{display:flex;align-items:center;gap:7px;background:var(--gold);color:#000;font-family:'Syne',sans-serif;font-weight:700;font-size:.8rem;letter-spacing:.05em;text-transform:uppercase;padding:9px 18px;border-radius:8px;text-decoration:none;transition:all .2s}
-    .nav-cta:hover{background:var(--gold2);transform:translateY(-1px)}
+html{scroll-behavior:smooth}
+body{font-family:'Instrument Sans',sans-serif;background:var(--paper);color:var(--ink);overflow-x:hidden;-webkit-font-smoothing:antialiased}
 
-    /* HERO */
-    .hero{min-height:100vh;display:grid;grid-template-columns:1fr 1fr;align-items:center;padding:96px 0 0;position:relative;overflow:hidden}
-    .hero-bg{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);background-size:80px 80px;mask-image:radial-gradient(ellipse at 60% 50%,black 20%,transparent 80%)}
-    .glow1{position:absolute;width:800px;height:800px;background:radial-gradient(ellipse,rgba(245,200,66,.08) 0%,transparent 65%);top:50%;right:-200px;transform:translateY(-50%);pointer-events:none}
-    .glow2{position:absolute;width:600px;height:600px;background:radial-gradient(ellipse,rgba(100,80,255,.06) 0%,transparent 65%);bottom:-100px;left:-100px;pointer-events:none}
-    .hero-l{padding:80px;position:relative;z-index:2}
-    .hero-badge{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--ba);background:var(--gd);border-radius:4px;padding:5px 12px;font-size:.74rem;font-weight:500;color:var(--gold2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:34px}
-    .bdot{width:6px;height:6px;border-radius:50%;background:var(--gold);animation:pulse 2s infinite}
-    @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(245,200,66,.4)}50%{box-shadow:0 0 0 6px rgba(245,200,66,0)}}
-    h1{font-family:'Syne',sans-serif;font-size:clamp(3rem,4.5vw,5.4rem);font-weight:800;line-height:.95;letter-spacing:-3px;margin-bottom:26px}
-    h1 .line{display:block}
-    h1 .em{color:var(--gold)}
-    h1 .dim{color:var(--text2);font-weight:400}
-    .hero-desc{font-size:1.03rem;color:var(--text2);line-height:1.8;max-width:430px;margin-bottom:42px}
-    .hero-desc strong{color:var(--text);font-weight:500}
-    .hero-actions{display:flex;gap:14px;align-items:center;margin-bottom:52px}
-    .btn-dl{display:inline-flex;align-items:center;gap:9px;background:var(--gold);color:#000;font-family:'Syne',sans-serif;font-weight:700;font-size:.93rem;padding:15px 26px;border-radius:10px;text-decoration:none;transition:all .25s;position:relative;overflow:hidden}
-    .btn-dl::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.15),transparent);pointer-events:none}
-    .btn-dl:hover{transform:translateY(-2px);box-shadow:0 20px 50px rgba(245,200,66,.25)}
-    .btn-ghost{color:var(--text2);font-size:.88rem;text-decoration:none;display:flex;align-items:center;gap:6px;transition:color .2s;white-space:nowrap}
-    .btn-ghost:hover{color:var(--text)}
-    .social-proof{display:flex;gap:8px;align-items:center}
-    .avs{display:flex}
-    .av{width:30px;height:30px;border-radius:50%;border:2px solid var(--black);background:var(--surface2);margin-left:-7px;display:flex;align-items:center;justify-content:center;font-size:.78rem}
-    .av:first-child{margin-left:0}
-    .proof-txt{font-size:.8rem;color:var(--text2);line-height:1.4}
-    .proof-txt strong{color:var(--text)}
-    .stars{color:var(--gold);font-size:.73rem;display:block}
+/* ── LANG BAR ── */
+.lang-bar{background:var(--ink);display:flex;justify-content:flex-end;padding:8px 40px;gap:4px}
+.lb{background:none;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.4);font-size:.68rem;font-weight:700;letter-spacing:.08em;padding:3px 8px;border-radius:4px;cursor:pointer;font-family:'Cabinet Grotesk',sans-serif;transition:all .15s}
+.lb:hover{color:rgba(255,255,255,.7);border-color:rgba(255,255,255,.3)}
+.lb.on{background:var(--gold);border-color:var(--gold);color:#000}
 
-    /* HERO RIGHT */
-    .hero-r{padding:80px 80px 80px 40px;position:relative;z-index:2;display:flex;flex-direction:column;gap:14px}
-    .demo-win{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.04)}
-    .win-bar{background:var(--surface2);padding:11px 15px;display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--border)}
-    .wd{width:10px;height:10px;border-radius:50%}
-    .wd.r{background:#ff5f57}.wd.y{background:#febc2e}.wd.g{background:#28c840}
-    .win-ttl{margin-left:9px;font-size:.73rem;color:var(--text3)}
-    .chat-msg{display:flex;gap:9px;margin-bottom:14px;align-items:flex-start}
-    .chat-av{width:27px;height:27px;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700}
-    .chat-av.ai{background:#10a37f;color:#fff}
-    .chat-av.user{background:var(--surface2);border:1px solid var(--border);color:var(--text2)}
-    .bubble{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 13px;font-size:.8rem;color:var(--text2);line-height:1.6;flex:1}
-    .bubble.ai{border-color:rgba(16,163,127,.2);background:rgba(16,163,127,.05)}
-    .vbar{background:var(--surface2);border:1px solid var(--ba);border-radius:12px;padding:13px 17px;display:flex;align-items:center;gap:12px}
-    .mic{width:38px;height:38px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;font-size:.95rem}
-    .mic::before{content:'';position:absolute;inset:-4px;border-radius:50%;border:1px solid rgba(245,200,66,.3);animation:mr 1.5s ease-out infinite}
-    .mic::after{content:'';position:absolute;inset:-8px;border-radius:50%;border:1px solid rgba(245,200,66,.15);animation:mr 1.5s ease-out infinite .4s}
-    @keyframes mr{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.5)}}
-    .wf{display:flex;align-items:center;gap:3px;flex:1}
-    .wb{width:3px;border-radius:2px;background:var(--gold);animation:wa .8s ease-in-out infinite alternate}
-    .wb:nth-child(1){height:8px;animation-delay:0s}.wb:nth-child(2){height:17px;animation-delay:.1s}.wb:nth-child(3){height:27px;animation-delay:.2s}.wb:nth-child(4){height:21px;animation-delay:.15s}.wb:nth-child(5){height:31px;animation-delay:.25s}.wb:nth-child(6){height:19px;animation-delay:.05s}.wb:nth-child(7){height:25px;animation-delay:.3s}.wb:nth-child(8){height:13px;animation-delay:.18s}.wb:nth-child(9){height:21px;animation-delay:.08s}.wb:nth-child(10){height:10px;animation-delay:.22s}.wb:nth-child(11){height:17px;animation-delay:.35s}.wb:nth-child(12){height:23px;animation-delay:.12s}
-    @keyframes wa{0%{transform:scaleY(.3);opacity:.5}100%{transform:scaleY(1);opacity:1}}
-    .vlbl{font-size:.76rem}.vlbl strong{display:block;color:var(--text);font-weight:500;margin-bottom:2px}.vlbl span{color:var(--text2)}
-    .fchip{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 11px;font-size:.76rem;color:var(--text2);position:absolute;animation:fc 4s ease-in-out infinite;white-space:nowrap}
-    .fchip.c1{top:135px;right:40px}.fchip.c2{top:250px;right:-18px;animation-delay:1.5s}
-    @keyframes fc{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+/* ── NAV ── */
+nav{position:sticky;top:0;z-index:99;background:var(--paper);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 40px;height:60px}
+.nlogo{font-family:'Cabinet Grotesk',sans-serif;font-weight:900;font-size:1.15rem;letter-spacing:-.5px;color:var(--ink);text-decoration:none}
+.nlogo em{color:var(--gold);font-style:normal}
+.nlinks{display:flex;gap:28px;align-items:center}
+.nlinks a{font-size:.85rem;color:var(--ink3);text-decoration:none;transition:color .15s}
+.nlinks a:hover{color:var(--ink)}
+.ndl{background:var(--ink);color:#fff;font-family:'Cabinet Grotesk',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.03em;padding:9px 18px;border-radius:8px;text-decoration:none;transition:all .2s;display:flex;align-items:center;gap:7px}
+.ndl:hover{background:#222;transform:translateY(-1px)}
 
-    /* LOGOS BAND */
-    .logos-band{padding:26px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);overflow:hidden;position:relative;z-index:2}
-    .logos-track{display:flex;gap:44px;align-items:center;animation:lt 30s linear infinite;white-space:nowrap;width:max-content}
-    @keyframes lt{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
-    .li{font-size:.76rem;font-weight:600;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;display:flex;align-items:center;gap:7px;transition:color .2s;flex-shrink:0}
-    .li:hover{color:var(--text2)}
-    .lsep{color:var(--border);flex-shrink:0}
-    .li img,.apill img{width:17px;height:17px;object-fit:contain;flex-shrink:0;border-radius:3px}
+/* ── HERO ── */
+.hero{padding:80px 40px 60px;max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 420px;gap:60px;align-items:center}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:24px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.3);padding:5px 12px;border-radius:100px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--gold);animation:blink2 1.8s infinite}
+@keyframes blink2{0%,100%{opacity:1}50%{opacity:.3}}
+h1{font-family:'Cabinet Grotesk',sans-serif;font-weight:900;font-size:clamp(2.6rem,5vw,4rem);line-height:1.0;letter-spacing:-2px;color:var(--ink);margin-bottom:20px}
+h1 .acc{color:var(--gold)}
+h1 .ul{text-decoration:underline;text-decoration-color:var(--gold);text-underline-offset:6px}
+.hero-sub{font-size:1.08rem;color:var(--ink2);line-height:1.75;max-width:460px;margin-bottom:36px}
+.hero-sub strong{color:var(--ink);font-weight:600}
+.hero-btns{display:flex;gap:12px;align-items:center;margin-bottom:32px;flex-wrap:wrap}
+.btn-primary{display:inline-flex;align-items:center;gap:9px;background:var(--ink);color:#fff;font-family:'Cabinet Grotesk',sans-serif;font-weight:700;font-size:.95rem;padding:14px 24px;border-radius:10px;text-decoration:none;transition:all .2s}
+.btn-primary:hover{background:#1a1a1a;transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.btn-sec{display:inline-flex;align-items:center;gap:6px;font-size:.88rem;color:var(--ink3);text-decoration:none;transition:color .15s}
+.btn-sec:hover{color:var(--ink)}
+.hero-proof{display:flex;align-items:center;gap:10px}
+.proof-avs{display:flex}
+.pav{width:28px;height:28px;border-radius:50%;border:2px solid var(--paper);margin-left:-7px;font-size:.75rem;display:flex;align-items:center;justify-content:center;background:var(--paper2)}
+.pav:first-child{margin-left:0}
+.proof-txt{font-size:.78rem;color:var(--ink3);line-height:1.4}
+.proof-txt strong{color:var(--ink)}
+.pstars{color:var(--gold);font-size:.7rem;display:block}
 
-    /* STATS */
-    .stats{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--border);position:relative;z-index:2}
-    .si{padding:52px 56px;border-right:1px solid var(--border);position:relative;overflow:hidden}
-    .si:last-child{border-right:none}
-    .si::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:0;transition:opacity .4s}
-    .si:hover::before{opacity:1}
-    .snum{font-family:'Syne',sans-serif;font-size:3.3rem;font-weight:800;letter-spacing:-3px;line-height:1;color:var(--text);margin-bottom:7px}
-    .snum .a{color:var(--gold)}
-    .slbl{font-size:.88rem;color:var(--text2);line-height:1.5}
+/* Hero visual */
+.hero-visual{position:relative}
+.hw{background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06),0 16px 40px rgba(0,0,0,.1)}
+.hwbar{background:#f8f7f5;border-bottom:1px solid var(--border);padding:10px 14px;display:flex;align-items:center;gap:6px}
+.wdot{width:10px;height:10px;border-radius:50%}
+.wdot.r{background:#ff5f57}.wdot.y{background:#febc2e}.wdot.g{background:#28c840}
+.wtitle{margin-left:8px;font-size:.72rem;color:var(--ink3)}
+.hwbody{padding:16px}
+.cmsg{display:flex;gap:9px;margin-bottom:12px;align-items:flex-start}
+.cav{width:26px;height:26px;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700}
+.cav.ai{background:#10a37f;color:#fff}
+.cav.u{background:#f0ede8;border:1px solid var(--border);color:var(--ink3);font-size:.55rem}
+.cbub{background:#f8f7f5;border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:.78rem;color:var(--ink2);line-height:1.55;flex:1}
+.cbub.ai{border-color:rgba(16,163,127,.2);background:rgba(16,163,127,.04);color:var(--ink)}
+.vbar{margin-top:4px;background:var(--paper);border:1.5px solid rgba(201,168,76,.4);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px}
+.mic{width:34px;height:34px;background:var(--gold);border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.85rem;position:relative}
+.mic::before{content:'';position:absolute;inset:-3px;border-radius:50%;border:1px solid rgba(201,168,76,.4);animation:mr 1.4s ease-out infinite}
+.mic::after{content:'';position:absolute;inset:-7px;border-radius:50%;border:1px solid rgba(201,168,76,.2);animation:mr 1.4s ease-out infinite .35s}
+@keyframes mr{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.6)}}
+.wf{display:flex;align-items:center;gap:2px;flex:1}
+.wb{width:3px;border-radius:2px;background:var(--gold);animation:wa .7s ease-in-out infinite alternate}
+.wb:nth-child(1){height:5px;animation-delay:0s}
+.wb:nth-child(2){height:12px;animation-delay:.08s}
+.wb:nth-child(3){height:20px;animation-delay:.16s}
+.wb:nth-child(4){height:14px;animation-delay:.11s}
+.wb:nth-child(5){height:22px;animation-delay:.2s}
+.wb:nth-child(6){height:16px;animation-delay:.04s}
+.wb:nth-child(7){height:18px;animation-delay:.24s}
+.wb:nth-child(8){height:10px;animation-delay:.14s}
+@keyframes wa{0%{transform:scaleY(.25);opacity:.4}100%{transform:scaleY(1);opacity:1}}
+.vlbl{font-size:.72rem}
+.vlbl strong{display:block;color:var(--ink);font-weight:600;margin-bottom:1px}
+.vlbl span{color:var(--ink3)}
+.cblink{display:inline-block;width:2px;height:.9em;background:var(--ink);margin-left:1px;vertical-align:text-bottom;animation:cb 1s step-end infinite}
+@keyframes cb{0%,100%{opacity:1}50%{opacity:0}}
 
-    section{position:relative;z-index:2}
-    .stag{display:inline-block;font-size:.7rem;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);margin-bottom:14px}
-    h2{font-family:'Syne',sans-serif;font-size:clamp(2rem,3.5vw,3.7rem);font-weight:800;letter-spacing:-2px;line-height:1;color:var(--text);margin-bottom:14px}
-    .ssub{font-size:.98rem;color:var(--text2);line-height:1.7;max-width:430px}
+/* ── APPS STRIP ── */
+.apps-strip{background:var(--ink);padding:18px 40px;overflow:hidden}
+.apps-label{font-size:.65rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:14px;text-align:center}
+.apps-track{display:flex;gap:40px;align-items:center;animation:st 28s linear infinite;width:max-content}
+@keyframes st{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.app-item{display:flex;align-items:center;gap:8px;font-size:.8rem;font-weight:600;color:rgba(255,255,255,.4);letter-spacing:.04em;white-space:nowrap;flex-shrink:0}
+.app-item svg,.app-item img{width:17px;height:17px;object-fit:contain;flex-shrink:0}
+.asep{color:rgba(255,255,255,.12);flex-shrink:0}
 
-    /* HOW */
-    .how{padding:110px 80px;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
-    .steps{display:flex;flex-direction:column;margin-top:44px}
-    .step{display:flex;gap:18px;padding:24px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:all .2s}
-    .step:first-child{border-top:1px solid var(--border)}
-    .step:hover .sc h3{color:var(--gold)}
-    .snb{width:34px;height:34px;flex-shrink:0;border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:.78rem;font-weight:700;color:var(--text3);transition:all .2s}
-    .step:hover .snb{border-color:var(--gold);color:var(--gold);background:var(--gd)}
-    .sc h3{font-family:'Syne',sans-serif;font-size:.98rem;font-weight:700;margin-bottom:5px;transition:color .2s}
-    .sc p{font-size:.86rem;color:var(--text2);line-height:1.6}
-    .kbd{display:inline-block;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:3px 9px;font-size:.76rem;font-family:monospace;color:var(--gold2);margin-top:5px}
-    .snote{margin-top:7px;font-size:.8rem;color:var(--gold)}
-    .how-vis{display:flex;flex-direction:column;gap:11px}
-    .wbig{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,.5)}
-    .wbig-body{padding:22px;min-height:250px;display:flex;flex-direction:column;gap:11px}
-    .tline{font-size:.88rem;color:var(--text2);line-height:1.7;min-height:48px}
-    .cblink{display:inline-block;width:2px;height:1em;background:var(--gold);margin-left:2px;vertical-align:text-bottom;animation:blink 1s step-end infinite}
-    @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+/* ── HOW ── */
+.how{padding:80px 40px;max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:start}
+.stag{font-size:.7rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);margin-bottom:14px;display:block}
+h2{font-family:'Cabinet Grotesk',sans-serif;font-weight:900;font-size:clamp(1.8rem,3vw,2.8rem);letter-spacing:-1.5px;line-height:1.05;margin-bottom:14px;color:var(--ink)}
+.how-sub{font-size:.95rem;color:var(--ink3);line-height:1.7;margin-bottom:40px}
+.steps{display:flex;flex-direction:column;gap:0}
+.step{display:flex;gap:16px;padding:20px 0;border-bottom:1px solid var(--border);cursor:default;transition:all .2s}
+.step:first-child{border-top:1px solid var(--border)}
+.step:hover .snum{background:var(--ink);color:#fff;border-color:var(--ink)}
+.snum{width:32px;height:32px;flex-shrink:0;border:1.5px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Cabinet Grotesk',sans-serif;font-size:.75rem;font-weight:800;color:var(--ink3);transition:all .2s}
+.scontent h3{font-family:'Cabinet Grotesk',sans-serif;font-size:.95rem;font-weight:800;color:var(--ink);margin-bottom:4px}
+.scontent p{font-size:.84rem;color:var(--ink3);line-height:1.6}
+.kbd{display:inline-block;background:var(--paper2);border:1px solid var(--border);border-radius:5px;padding:2px 8px;font-size:.73rem;font-family:monospace;color:var(--ink2);margin-top:5px}
+.snote{margin-top:6px;font-size:.78rem;color:var(--gold);font-weight:600}
 
-    /* FEATURES */
-    .feats{padding:80px;border-top:1px solid var(--border)}
-    .fhdr{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:60px}
-    .fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:16px;overflow:hidden}
-    .fc{background:var(--black);padding:38px 34px;transition:background .3s;position:relative;overflow:hidden}
-    .fc::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(circle at top left,rgba(245,200,66,.04),transparent 60%);opacity:0;transition:opacity .3s}
-    .fc:hover::before{opacity:1}
-    .fc.wide{grid-column:span 2}
-    .ficon{width:42px;height:42px;background:var(--gd);border:1px solid var(--ba);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.15rem;margin-bottom:18px}
-    .fc h3{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;margin-bottom:9px}
-    .fc p{font-size:.855rem;color:var(--text2);line-height:1.65}
-    .ftag{display:inline-block;margin-top:11px;background:var(--gd);border:1px solid var(--ba);color:var(--gold2);font-size:.68rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;border-radius:4px;padding:3px 7px}
+/* how visual */
+.how-right{position:sticky;top:80px}
+.before-after{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.ba-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px}
+.ba-label{font-size:.65rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.ba-label.bad{color:#c0392b}
+.ba-label.good{color:var(--green)}
+.ba-body{font-size:.8rem;color:var(--ink2);line-height:1.6}
+.ba-time{display:inline-block;margin-top:8px;font-family:'Cabinet Grotesk',sans-serif;font-weight:800;font-size:1.1rem}
+.ba-label.bad .ba-time{color:#c0392b}
+.ba-label.good .ba-time{color:var(--green)}
+.shortcut-demo{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between}
+.shortcut-demo span{font-size:.8rem;color:var(--ink3)}
+.shortcut-demo .keys{display:flex;gap:4px}
+.key{background:var(--paper2);border:1px solid var(--border);border-radius:5px;padding:3px 8px;font-size:.72rem;font-family:monospace;color:var(--ink);font-weight:600}
 
-    /* COMPAT */
-    .compat{padding:80px;border-top:1px solid var(--border);text-align:center}
-    .amwrap{overflow:hidden;margin-top:44px}
-    .am{display:flex;gap:11px;animation:am2 22s linear infinite;width:max-content}
-    @keyframes am2{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
-    .apill{display:flex;align-items:center;gap:8px;border:1px solid var(--border);background:var(--surface);border-radius:100px;padding:9px 18px;font-size:.83rem;color:var(--text2);white-space:nowrap;transition:all .2s}
-    .apill:hover{border-color:var(--ba);color:var(--text)}
+/* ── WORKS WITH ── */
+.works{padding:80px 40px;max-width:1100px;margin:0 auto;border-top:1px solid var(--border)}
+.works-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:48px}
+.works-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.wcard{background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;display:flex;align-items:center;gap:12px;transition:all .2s}
+.wcard:hover{border-color:var(--gold);transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.08)}
+.wcard-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.wcard-icon svg,.wcard-icon img{width:22px;height:22px;object-fit:contain}
+.wcard-name{font-family:'Cabinet Grotesk',sans-serif;font-size:.88rem;font-weight:800;color:var(--ink)}
+.wcard-type{font-size:.72rem;color:var(--ink3);margin-top:1px}
+.more-apps{margin-top:16px;text-align:center;font-size:.82rem;color:var(--ink3)}
+.more-apps strong{color:var(--ink)}
 
-    /* TESTIMONIALS */
-    .tests{padding:80px;border-top:1px solid var(--border)}
-    .tgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:52px}
-    .tcard{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:26px;transition:border-color .3s,transform .3s}
-    .tcard:hover{border-color:rgba(245,200,66,.2);transform:translateY(-4px)}
-    .tstars{color:var(--gold);font-size:.83rem;margin-bottom:13px;letter-spacing:2px}
-    .tq{font-size:.88rem;color:var(--text2);line-height:1.7;margin-bottom:18px;font-style:italic}
-    .tauthor{display:flex;align-items:center;gap:9px}
-    .tav{width:33px;height:33px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.78rem;color:var(--gold)}
-    .tname{font-size:.83rem;font-weight:600;color:var(--text)}
-    .trole{font-size:.73rem;color:var(--text3);margin-top:1px}
+/* ── USE CASES ── */
+.usecases{background:var(--ink);padding:80px 40px}
+.usecases-inner{max-width:1100px;margin:0 auto}
+.usecases-inner .stag{color:var(--gold-lt)}
+.usecases-inner h2{color:#fff}
+.uc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:48px}
+.uc-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:28px}
+.uc-icon{font-size:1.5rem;margin-bottom:16px}
+.uc-card h3{font-family:'Cabinet Grotesk',sans-serif;font-size:1rem;font-weight:800;color:#fff;margin-bottom:8px}
+.uc-card p{font-size:.84rem;color:rgba(255,255,255,.5);line-height:1.65}
+.uc-ex{margin-top:12px;display:flex;gap:6px;flex-wrap:wrap}
+.uc-tag{font-size:.7rem;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);padding:3px 9px;border-radius:100px}
 
-    /* PRICING */
-    .pricing{padding:80px;border-top:1px solid var(--border)}
-    .pinner{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center;max-width:940px}
-    .pcard{background:var(--surface);border:1px solid var(--ba);border-radius:20px;padding:44px;position:relative;overflow:hidden}
-    .pcard::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle at top right,rgba(245,200,66,.06),transparent 60%)}
-    .pbadge{display:inline-block;background:var(--gold);color:#000;font-family:'Syne',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border-radius:4px;padding:4px 9px;margin-bottom:26px}
-    .pamount{font-family:'Syne',sans-serif;font-size:4.8rem;font-weight:800;letter-spacing:-4px;line-height:1;color:var(--text);margin-bottom:4px}
-    .pamount span{font-size:1.4rem;letter-spacing:0;vertical-align:top;margin-top:14px;display:inline-block}
-    .pamount sub{font-size:.95rem;letter-spacing:0;color:var(--text2)}
-    .pnote{font-size:.83rem;color:var(--text2);margin-bottom:28px}
-    .pfeats{list-style:none;display:flex;flex-direction:column;gap:11px;margin-bottom:28px}
-    .pfeats li{display:flex;align-items:center;gap:9px;font-size:.86rem;color:var(--text2)}
-    .ck{width:17px;height:17px;flex-shrink:0;background:var(--gd);border:1px solid var(--ba);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:.62rem;color:var(--gold)}
-    .btn-dl-full{display:flex;align-items:center;justify-content:center;gap:9px;background:var(--gold);color:#000;font-family:'Syne',sans-serif;font-weight:700;font-size:.92rem;padding:17px;border-radius:12px;text-decoration:none;transition:all .25s;width:100%}
-    .btn-dl-full:hover{transform:translateY(-2px);box-shadow:0 20px 50px rgba(245,200,66,.25)}
-    .pcompat{text-align:center;font-size:.73rem;color:var(--text3);margin-top:12px}
-    .pcopy h2{margin-bottom:18px}
-    .pcopy p{color:var(--text2);line-height:1.8;margin-bottom:22px}
-    .vslist{display:flex;flex-direction:column;gap:7px}
-    .vsrow{display:flex;align-items:center;gap:9px;font-size:.83rem;color:var(--text2)}
-    .vsck{color:var(--green);font-size:.95rem}
+/* ── WHY ── */
+.why{padding:80px 40px;background:var(--paper2);border-top:1px solid var(--border)}
+.why-inner{max-width:1100px;margin:0 auto}
+.why-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:48px}
+.why-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:32px}
+.why-icon{font-size:1.4rem;margin-bottom:16px}
+.why-card h3{font-family:'Cabinet Grotesk',sans-serif;font-size:1rem;font-weight:800;color:var(--ink);margin-bottom:8px}
+.why-card p{font-size:.84rem;color:var(--ink3);line-height:1.65}
+/* ── PRICING ── */
+.pricing{padding:80px 40px;max-width:1100px;margin:0 auto;border-top:1px solid var(--border)}
+.pricing-inner{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:48px}
+.pricing-4{grid-template-columns:repeat(4,1fr)}
+.pcard{background:#fff;border:1px solid var(--border);border-radius:16px;padding:32px;position:relative}
+.pcard.featured{border-color:var(--ink);border-width:2px}
+.pcard-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;font-family:'Cabinet Grotesk',sans-serif;font-size:.65rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:4px 12px;border-radius:100px;white-space:nowrap}
+.pcard-name{font-family:'Cabinet Grotesk',sans-serif;font-size:.75rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:16px}
+.pcard-price{font-family:'Cabinet Grotesk',sans-serif;font-weight:900;font-size:2.8rem;letter-spacing:-2px;color:var(--ink);line-height:1;margin-bottom:4px}
+.pcard-price sup{font-size:1rem;letter-spacing:0;vertical-align:top;margin-top:.5rem;display:inline-block}
+.pcard-price span{font-size:1rem;letter-spacing:0;color:var(--ink3)}
+.pcard-sub{font-size:.8rem;color:var(--ink3);margin-bottom:24px;line-height:1.4}
+.pcard-mins{display:inline-flex;align-items:center;gap:6px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.3);padding:6px 12px;border-radius:8px;margin-bottom:24px;font-size:.82rem;font-weight:600;color:var(--ink)}
+.pfeats{list-style:none;display:flex;flex-direction:column;gap:9px;margin-bottom:28px}
+.pfeats li{display:flex;align-items:flex-start;gap:8px;font-size:.82rem;color:var(--ink2)}
+.pfeats li::before{content:'✓';color:var(--green);font-weight:700;flex-shrink:0;margin-top:.05em}
+.pbtn{display:flex;align-items:center;justify-content:center;gap:8px;font-family:'Cabinet Grotesk',sans-serif;font-weight:700;font-size:.88rem;padding:13px;border-radius:9px;text-decoration:none;transition:all .2s;width:100%;cursor:pointer;border:none}
+.pbtn.dark{background:var(--ink);color:#fff}
+.pbtn.dark:hover{background:#222}
+.pbtn.outline{background:none;border:1.5px solid var(--border);color:var(--ink)}
+.pbtn.outline:hover{border-color:var(--ink)}
+.pbtn-note{text-align:center;font-size:.72rem;color:var(--ink3);margin-top:10px}
+.pricing-note{margin-top:32px;background:var(--paper2);border:1px solid var(--border);border-radius:10px;padding:16px 20px;font-size:.82rem;color:var(--ink3);line-height:1.65}
+.pricing-note strong{color:var(--ink)}
 
-    /* CTA */
-    .cta{padding:110px 80px;text-align:center;border-top:1px solid var(--border);position:relative;overflow:hidden}
-    .cta-glow{position:absolute;width:800px;height:400px;background:radial-gradient(ellipse,rgba(245,200,66,.06),transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none}
-    .cta h2{font-size:clamp(3rem,6vw,5.8rem);letter-spacing:-4px;line-height:.92;margin-bottom:26px}
-    .cta .em{color:var(--gold)}
-    .cta p{color:var(--text2);font-size:1.02rem;margin-bottom:40px}
-    .cta-acts{display:flex;gap:14px;justify-content:center;align-items:center}
+/* ── CTA ── */
+.cta{background:var(--gold);padding:80px 40px;text-align:center}
+.cta h2{font-family:'Cabinet Grotesk',sans-serif;font-weight:900;font-size:clamp(2rem,5vw,3.5rem);letter-spacing:-2px;color:var(--ink);line-height:1;margin-bottom:16px}
+.cta p{font-size:1rem;color:rgba(0,0,0,.6);margin-bottom:36px;max-width:480px;margin-left:auto;margin-right:auto}
+.cta .btn-primary{background:var(--ink);display:inline-flex}
+.cta .btn-primary:hover{background:#111}
+.cta-note{margin-top:16px;font-size:.75rem;color:rgba(0,0,0,.5)}
 
-    /* FOOTER */
-    footer{padding:44px 80px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-    .flogo{font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:800}
-    .flogo span{color:var(--gold)}
-    .flinks{display:flex;gap:26px}
-    .flinks a{font-size:.8rem;color:var(--text3);text-decoration:none;transition:color .2s}
-    .flinks a:hover{color:var(--text2)}
-    .fcopy{font-size:.76rem;color:var(--text3)}
+/* ── FOOTER ── */
+footer{border-top:1px solid var(--border);padding:32px 40px;display:flex;align-items:center;justify-content:space-between}
+.flogo{font-family:'Cabinet Grotesk',sans-serif;font-weight:900;font-size:1rem;color:var(--ink)}
+.flogo em{color:var(--gold);font-style:normal}
+.flinks{display:flex;gap:24px}
+.flinks a{font-size:.78rem;color:var(--ink3);text-decoration:none}
+.flinks a:hover{color:var(--ink)}
+.fcopy{font-size:.75rem;color:var(--ink3)}
 
-    .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s ease}
-    .reveal.visible{opacity:1;transform:none}
-    .d1{transition-delay:.1s}.d2{transition-delay:.2s}.d3{transition-delay:.3s}
+/* ── REVEAL ── */
+.rv{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease}
+.rv.in{opacity:1;transform:none}
+.d1{transition-delay:.08s}.d2{transition-delay:.16s}.d3{transition-delay:.24s}
 
-    @media(max-width:900px){
-      .hero{grid-template-columns:1fr}.hero-r{display:none}.hero-l{padding:76px 22px 56px}
-      .how{grid-template-columns:1fr;padding:56px 22px}.how-vis{display:none}
-      .feats{padding:56px 22px}.fgrid{grid-template-columns:1fr}.fc.wide{grid-column:span 1}
-      .fhdr{flex-direction:column;gap:18px;align-items:flex-start}
-      .stats{grid-template-columns:1fr}.si{border-right:none;border-bottom:1px solid var(--border);padding:32px 22px}
-      .tgrid{grid-template-columns:1fr}.pinner{grid-template-columns:1fr}
-      .pricing,.tests,.compat{padding:56px 22px}
-      .cta{padding:76px 22px}
-      footer{flex-direction:column;gap:22px;text-align:center;padding:32px 22px}
-      nav{padding:0 22px}.nav-links{display:none}
-      h1{letter-spacing:-2px}h2{letter-spacing:-1.5px}
-      .lang-bar{padding:5px 14px;gap:3px}
-    }
-  </style>
+/* ── RESPONSIVE ── */
+@media(max-width:860px){
+  .hero{grid-template-columns:1fr;gap:40px;padding:48px 20px 40px}
+  .hero-visual{display:none}
+  .how{grid-template-columns:1fr;gap:40px;padding:60px 20px}
+  .how-right{display:none}
+  .works-grid{grid-template-columns:repeat(2,1fr);padding:0 20px}
+  .works{padding:60px 20px}
+  .works-header{flex-direction:column;align-items:flex-start;gap:8px}
+  .uc-grid{grid-template-columns:1fr;padding:0}
+  .usecases{padding:60px 20px}
+  .pricing-inner,.pricing-4{grid-template-columns:1fr;max-width:400px;margin:48px auto 0}
+  .why-grid{grid-template-columns:1fr}
+  .pricing{padding:60px 20px}
+  .cta{padding:60px 20px}
+  footer{flex-direction:column;gap:16px;text-align:center;padding:24px 20px}
+  nav{padding:0 20px}.nlinks{display:none}
+  .lang-bar{padding:8px 20px}
+  h1{letter-spacing:-1.5px}
+  .apps-strip{padding:18px 20px}
+}
+</style>
 </head>
 <body>
-
-<!-- LANG BAR -->
 <div class="lang-bar">
-  <button class="lang-btn active" onclick="setLang('en')">EN</button>
-  <button class="lang-btn" onclick="setLang('fr')">FR</button>
-  <button class="lang-btn" onclick="setLang('es')">ES</button>
-  <button class="lang-btn" onclick="setLang('de')">DE</button>
-  <button class="lang-btn" onclick="setLang('pt')">PT</button>
-  <button class="lang-btn" onclick="setLang('it')">IT</button>
-  <button class="lang-btn" onclick="setLang('ja')">JA</button>
-  <button class="lang-btn" onclick="setLang('zh')">ZH</button>
-  <button class="lang-btn" onclick="setLang('ko')">KO</button>
-  <button class="lang-btn" onclick="setLang('ru')">RU</button>
+ <button class="lb on" onclick="setLang('en')">EN</button>
+ <button class="lb" onclick="setLang('fr')">FR</button>
 </div>
-
-<!-- NAV -->
 <nav>
-  <div class="nav-logo">Vocal<span>Type</span></div>
-  <div class="nav-links">
-    <a href="#how" data-t="nav_how">How it works</a>
-    <a href="#features" data-t="nav_feat">Features</a>
-    <a href="#pricing" data-t="nav_price">Pricing</a>
-  </div>
-  <a class="nav-cta" href="https://github.com/lazogrowth-glitch/lazox/releases/download/v1.1/VocalType_Setup.exe">
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17"/></svg>
-    <span data-t="nav_dl">Download</span>
-  </a>
+ <a class="nlogo" href="#"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYAAACM/rhtAAAHU0lEQVR4nO2Zf4xcVRXHP/fd+97MvpnZnW23UFpSWkpbqvwQbXUlUUqbYIhNRMRYGlGjEINp+IMECRpqQlAxBiNUozQ1MRqD2pqY8CMuUJqKtFu6tVApkP6AtpZ0ge3O7Mzsmx/vvnv8Y9ql3R12l90a+IOTvGSSe+e+zzvfe8657zwVhqHwITbvgwaYyD4CnK59BDhdM+dqIaUUntd8XuccIhMmB1EKTk1T/1dArTXWWoaHhwHwfZ+2tjastS3nK4U4h0oSwfMU6j3xzoHEWmvK5TJBEHDddddx/fXXM2fOHEqlEqrFnT1PSWxF+UbV7/zWxzZ1ZP0BmwhK0dLl0wL0PI9yuczatWvZuXMnPT09PPnkk+zevZv169fTaDRGPYySas2qdKCjn9999caf/OizfbffvGiz0So+JfUYSDXVSnLac2vWrOHRRx8FmnvvNDjAhg0buOOOO8jlciiclMoNdeklMyoPfv9TBz/ffdFTbxwrFRddmBr+wm1Prdnx4sDVqcBzImc7bUqASimcc6RSKfr6+rj44otJkgRjzAiocw6lFN3d3ezdu5dEjFy5JM9v71v58sIL05Ujx4vJ7Au6njauVtn8j8Pz7vnli+toKnrWvpiSxJ7nUa1W6e7uZuHChYjICNzpcWh6+cYbv0ySJKz7+pX8/VerVFdenV9PgsRola1XqxfE+FyzbHZ/Z3swkCSilMJNG/C0KaUmk05QCj63/EKVy2UpFqNZnpJsOp2ycRzPVp7RM/LpOEzrsmux1LSjuFWkjh4Xgd9t3o/WRozxlLU2FQR+Ui43wmq1YYxRorWXtPr/B1ZJRAStlTOeEuMpCdO62mretABFZEKJm8ECt3714ySJVUninDGmHsdWh2m/5hs/qTWcVx6Oc+cc0Pf9cSUWEYIgAIF/7j4u5XKFXK6tmDgZrtXqxk/5/aJsMlis+VEtyXotlpoUoFKcVY6ccwRBwL59+ygUCojISA48E04pxXPP/QuU4td/2scN67bKYIk3w5TzRKSSams74ROzva9/dqHU6NJayeg8OCGgEyG2grXvSikipNNpjh49ykMPPYTWGgBr7cjl+z5bt27lscceIwxDcqHhpVcH1XfueXb+M88fTc+9oOv5SqXW6Gz34789fWx5I3a6VbkbF1AE0oFmRkdAvj11lhettWQyGR544AE2bNgwkqhPXz09Pdxyyy1NiQGbOJXLBfLaG4Xcxs2vLzn+9nC44Pyg8ODvX17at39weeB7IjL2VPOelURrRaXS4NtfWcRdt15OKfK54XtPMDBYxfc9RN7Ng1EUsWzZMlavXo0xht7eXh5//HGCIMD3/VNyQxw7uma0yfN/uUnZeqX+2uGTf/zmD3beEFXtaXnHAI573BKBTJtmZj6N0gabjN1nALlcjj179tDX1zcyls1mW0Z5kjg1HFk5r8NPPbOz/9bBQpX29hTWSstom3APlodjypU6uYzhiiWzsNbijYrcJEnIZDK0t7fT3t5OLpcbc2j1lMJay2VLZjEzH6hKFMtQpSGgxs1U7wkoAtp47HzpJO8MVkkHws2rF+Nc6+rhnBsJkCQZWxSaBwxYu3oxKV94ZzBSvS+dVNp4yrWqcRMBOiekU4ZDx8ocOFKiUo5Y2T2XBfPyRNUYrccvcWea1oqoGrNgXp6V3XOplCMOHClx6FiZdMowJQ9CM/e5RNi05RCFUpXAJGy8fxXKU8QNh26VWUfDnZqrPMXG+1cRmIRCqcqmLYdwzZP0uDYuoHNCJjRsf6GfbbtOUI0irlraycP3rsCJUK1ZjPbQp94rzry0pzDao1qzOBEevncFVy3tpBpFbNt1gu0v9JMJDePJC5M4sCrVBM2GPn/46dUsmt9JPt/Bv18tcPv6Zzl8tAAogpRGoRCauaJeTwBh4UWd/Oa+lXxyaSfF4hAHjxT4xj07qEQxnqfGlXdSgACepxiOLJcvzvOzO69i0fw8bWFIw2qe7X2TPz9xgH2vDSACntcMsCsu7WLNFxezsnsugUmoRhEHjxS5+xd7+c+B4qS8N2lAaEpWiSxdnSl++N3LuPYzs8l3hOQyIXWrKJYaxNbhGw0K8lmflC+UhyOKQxHbdvXz40deZqBQJxsakknAvS9AaHrSWketZrnm07O57aZLWDS/nfO7MoRtPoVilWotZuaMEBHhxNvDHDhSYtOWQ2x/oZ902mCMNynPTQkQmnvSU4pyZPG1YuG8HJ+4tBNjFF9aMYfFF+X461P/5ZXDJV45PMTrxyvEVsiFBicy4Z4bbe+7syACiQjZU3vo9eMVFNCwjmuXn0cQaPYfGmL/wSEGhhoYrUgHetKSjrYpvxcrBdYKMzoCeh5ZQWdHQKliSZwjndLksz5fu2sH23rfIpv135esZ9q0ejNKQSN2PN37Fpk2jThQHiROSPuak8U6Wk+cSsa9x3R71EIz541ZRCAVeHiTqDbj2bS7WwoI06b5Q84emKqsZ9o5ab85kbFtn3P07eBD32H9HwnPb0XhwLTWAAAAAElFTkSuQmCC" alt="VocalType" style="height:32px;width:32px;border-radius:7px;vertical-align:middle;margin-right:8px;display:inline-block">Vocal<em>Type</em></a>
+ <div class="nlinks">
+ <a href="#how" data-t="n_how">How it works</a>
+ <a href="#pricing" data-t="n_price">Pricing</a>
+ <a href="https://github.com/lazogrowth-glitch/lazox">GitHub</a>
+ </div>
+ <a class="ndl" href="https://vocaltype.app/download">
+ <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17"/></svg>
+ <span data-t="n_dl">Free download</span>
+ </a>
 </nav>
-
-<!-- HERO -->
 <section class="hero">
-  <div class="hero-bg"></div><div class="glow1"></div><div class="glow2"></div>
-  <div class="hero-l">
-    <div class="hero-badge"><div class="bdot"></div><span data-t="badge">7-day free trial</span></div>
-    <h1>
-      <span class="line dim" data-t="h1_1">Stop typing.</span>
-      <span class="line" data-t="h1_2">Just</span>
-      <span class="line em" data-t="h1_3">speak.</span>
-    </h1>
-    <p class="hero-desc" data-t="hero_desc">VocalType turns your voice into text in <strong>every AI tool</strong> — ChatGPT, Claude, Gemini, Copilot. On Windows, everywhere, instantly.</p>
-    <div class="hero-actions">
-      <a class="btn-dl" href="https://github.com/lazogrowth-glitch/lazox/releases/download/v1.1/VocalType_Setup.exe">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17"/></svg>
-        <span data-t="btn_trial">Start free trial — 7 days</span>
-      </a>
-      <a class="btn-ghost" href="#how"><span data-t="btn_how">See how it works</span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
-    </div>
-    <div class="social-proof">
-      <div class="avs"><div class="av">🧑</div><div class="av">👩</div><div class="av">🧔</div><div class="av">👨</div><div class="av">+</div></div>
-      <div class="proof-txt"><span class="stars">★★★★★</span><span data-t="proof"><strong>Already used by hundreds</strong> of AI power users</span></div>
-    </div>
-  </div>
-  <div class="hero-r">
-    <div class="demo-win" style="margin-top:18px">
-      <div class="win-bar"><div class="wd r"></div><div class="wd y"></div><div class="wd g"></div><div class="win-ttl">ChatGPT — chat.openai.com</div></div>
-      <div style="padding:18px;display:flex;flex-direction:column;gap:12px">
-        <div class="chat-msg">
-          <div class="chat-av ai"><svg width="13" height="13" viewBox="0 0 24 24" fill="white"><path d="M22.282 9.821a5.985 5.985 0 00-.516-4.91 6.046 6.046 0 00-6.51-2.9A6.065 6.065 0 004.981 4.18a5.985 5.985 0 00-3.998 2.9 6.046 6.046 0 00.743 7.097 5.98 5.98 0 00.51 4.911 6.051 6.051 0 006.515 2.9A5.985 5.985 0 0013.26 24a6.056 6.056 0 005.772-4.206 5.99 5.99 0 003.997-2.9 6.056 6.056 0 00-.747-7.073z"/></svg></div>
-          <div class="bubble ai" data-t="demo_ai">Sure! I can help you write that professional email. Here's a polished and direct version…</div>
-        </div>
-        <div class="chat-msg">
-          <div class="chat-av user" data-t="you">You</div>
-          <div class="bubble"><span id="typed-hero"></span><span class="cblink"></span></div>
-        </div>
-      </div>
-    </div>
-    <div class="vbar">
-      <div class="mic">🎙️</div>
-      <div class="wf"><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div></div>
-      <div class="vlbl"><strong data-t="vt_active">VocalType active</strong><span>Ctrl + Shift + Space</span></div>
-    </div>
-    <!-- Claude logo chip -->
-    <div class="fchip c1">
-      <svg width="12" height="12" viewBox="0 0 46 46" fill="none"><path d="M32.73 10H26.3L23 17.39 19.7 10h-6.43L23 30.08 32.73 10Z" fill="rgba(205,178,145,.9)"/><path d="m36 26-3.27-6.93L23 36.56 13.27 19.07 10 26l13 10 13-10Z" fill="rgba(205,178,145,.5)"/></svg>
-      <span data-t="chip_claude">Claude · Active</span>
-    </div>
-    <!-- Gemini logo chip -->
-    <div class="fchip c2">
-      <img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg" style="width:12px;height:12px" alt="">
-      <span data-t="chip_gemini">Gemini · Ready</span>
-    </div>
-  </div>
+ <div>
+ <div class="hero-eyebrow"><div class="dot"></div><span data-t="eyebrow">7-day free trial · Windows 10 & 11</span></div>
+ <h1 data-t="h1">Speak your prompts.<br>Stop typing to ChatGPT.</h1>
+ <p class="hero-sub" data-t="hsub">Press one shortcut, dictate your prompt in any AI tool — <strong>ChatGPT, Claude, Gemini, Copilot</strong> — and in every Windows app. 4× faster than typing.</p>
+ <div class="hero-btns">
+ <a class="btn-primary" href="https://vocaltype.app/download">
+ <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17"/></svg>
+ <span data-t="h_btn">Start free trial — 7 days</span>
+ </a>
+ <a class="btn-sec" href="#how">
+ <span data-t="h_sec">See how it works</span>
+ <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+ </a>
+ </div>
+ <div class="hero-proof">
+ <div class="proof-avs">
+ <div class="pav">🧑</div><div class="pav">👩</div><div class="pav">🧔</div><div class="pav">+</div>
+ </div>
+ <div class="proof-txt">
+ <span class="pstars">★★★★★</span>
+ <span data-t="h_proof">Used by <strong>AI power users</strong> on Windows</span>
+ </div>
+ </div>
+ </div>
+ <div class="hero-visual">
+ <div class="hw">
+ <div class="hwbar">
+ <div class="wdot r"></div><div class="wdot y"></div><div class="wdot g"></div>
+ <div class="wtitle">ChatGPT — chatgpt.com</div>
+ </div>
+ <div class="hwbody">
+ <div class="cmsg">
+ <div class="cav ai">
+ <svg width="13" height="13" viewBox="0 0 24 24" fill="white"><path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073z"/></svg>
+ </div>
+ <div class="cbub ai" data-t="demo_ai">Here's a concise summary of your meeting with next steps outlined clearly…</div>
+ </div>
+ <div class="cmsg">
+ <div class="cav u" data-t="you">You</div>
+ <div class="cbub"><span id="typed"></span><span class="cblink"></span></div>
+ </div>
+ </div>
+ </div>
+ <div class="vbar" style="margin-top:10px">
+ <div class="mic">🎙️</div>
+ <div class="wf">
+ <div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div>
+ </div>
+ <div class="vlbl"><strong data-t="vt_on">VocalType active</strong><span>Ctrl+Shift+Space</span></div>
+ </div>
+ </div>
 </section>
-
-<!-- LOGOS BAND -->
-<div class="logos-band">
-  <div class="logos-track">
-    <span class="li"><svg width="17" height="17" viewBox="0 0 24 24" fill="rgba(240,237,232,.4)"><path d="M22.282 9.821a5.985 5.985 0 00-.516-4.91 6.046 6.046 0 00-6.51-2.9A6.065 6.065 0 004.981 4.18a5.985 5.985 0 00-3.998 2.9 6.046 6.046 0 00.743 7.097 5.98 5.98 0 00.51 4.911 6.051 6.051 0 006.515 2.9A5.985 5.985 0 0013.26 24a6.056 6.056 0 005.772-4.206 5.99 5.99 0 003.997-2.9 6.056 6.056 0 00-.747-7.073z"/></svg>ChatGPT</span><span class="lsep">·</span>
-    <span class="li"><svg width="17" height="17" viewBox="0 0 46 46" fill="none"><path d="M32.73 10H26.3L23 17.39 19.7 10h-6.43L23 30.08 32.73 10Z" fill="rgba(240,237,232,.45)"/><path d="m36 26-3.27-6.93L23 36.56 13.27 19.07 10 26l13 10 13-10Z" fill="rgba(240,237,232,.25)"/></svg>Claude</span><span class="lsep">·</span>
-    <span class="li"><img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg" style="opacity:.5" alt="">Gemini</span><span class="lsep">·</span>
-    <span class="li"><svg width="17" height="17" viewBox="0 0 24 24"><path d="M11.5 2.75A9.25 9.25 0 002.75 12a9.25 9.25 0 009.25 9.25V2.75z" fill="#0078d4" opacity=".6"/><path d="M12.5 2.75V21.25A9.25 9.25 0 0021.25 12a9.25 9.25 0 00-8.75-9.25z" fill="#50e6ff" opacity=".6"/></svg>Copilot</span><span class="lsep">·</span>
-    <span class="li"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/perplexity.svg" style="filter:invert(.45) brightness(.75)" alt="">Perplexity</span><span class="lsep">·</span>
-    <span class="li"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="rgba(100,149,237,.2)"/><circle cx="12" cy="12" r="4.5" fill="rgba(100,149,237,.5)"/><circle cx="12" cy="12" r="1.8" fill="rgba(200,220,255,.8)"/></svg>DeepSeek</span><span class="lsep">·</span>
-    <span class="li"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/mistral.svg" style="filter:invert(.45) brightness(.75)" alt="">Mistral</span><span class="lsep">·</span>
-    <span class="li"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/discord.svg" style="filter:invert(.45) brightness(.75)" alt="">Discord</span><span class="lsep">·</span>
-    <span class="li"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/gmail.svg" style="filter:grayscale(1) brightness(.55)" alt="">Gmail</span><span class="lsep">·</span>
-    <span class="li"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/notion.svg" style="filter:invert(.45) brightness(.75)" alt="">Notion AI</span><span class="lsep">·</span>
-    <!-- duplicate set -->
-    <span class="li"><svg width="17" height="17" viewBox="0 0 24 24" fill="rgba(240,237,232,.4)"><path d="M22.282 9.821a5.985 5.985 0 00-.516-4.91 6.046 6.046 0 00-6.51-2.9A6.065 6.065 0 004.981 4.18a5.985 5.985 0 00-3.998 2.9 6.046 6.046 0 00.743 7.097 5.98 5.98 0 00.51 4.911 6.051 6.051 0 006.515 2.9A5.985 5.985 0 0013.26 24a6.056 6.056 0 005.772-4.206 5.99 5.99 0 003.997-2.9 6.056 6.056 0 00-.747-7.073z"/></svg>ChatGPT</span><span class="lsep">·</span>
-    <span class="li"><svg width="17" height="17" viewBox="0 0 46 46" fill="none"><path d="M32.73 10H26.3L23 17.39 19.7 10h-6.43L23 30.08 32.73 10Z" fill="rgba(240,237,232,.45)"/><path d="m36 26-3.27-6.93L23 36.56 13.27 19.07 10 26l13 10 13-10Z" fill="rgba(240,237,232,.25)"/></svg>Claude</span><span class="lsep">·</span>
-    <span class="li"><img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg" style="opacity:.5" alt="">Gemini</span><span class="lsep">·</span>
-    <span class="li"><svg width="17" height="17" viewBox="0 0 24 24"><path d="M11.5 2.75A9.25 9.25 0 002.75 12a9.25 9.25 0 009.25 9.25V2.75z" fill="#0078d4" opacity=".6"/><path d="M12.5 2.75V21.25A9.25 9.25 0 0021.25 12a9.25 9.25 0 00-8.75-9.25z" fill="#50e6ff" opacity=".6"/></svg>Copilot</span><span class="lsep">·</span>
-    <span class="li"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/perplexity.svg" style="filter:invert(.45) brightness(.75)" alt="">Perplexity</span><span class="lsep">·</span>
-    <span class="li"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="rgba(100,149,237,.2)"/><circle cx="12" cy="12" r="4.5" fill="rgba(100,149,237,.5)"/><circle cx="12" cy="12" r="1.8" fill="rgba(200,220,255,.8)"/></svg>DeepSeek</span><span class="lsep">·</span>
-    <span class="li"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/mistral.svg" style="filter:invert(.45) brightness(.75)" alt="">Mistral</span><span class="lsep">·</span>
-    <span class="li"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/discord.svg" style="filter:invert(.45) brightness(.75)" alt="">Discord</span><span class="lsep">·</span>
-    <span class="li"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/gmail.svg" style="filter:grayscale(1) brightness(.55)" alt="">Gmail</span><span class="lsep">·</span>
-    <span class="li"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/notion.svg" style="filter:invert(.45) brightness(.75)" alt="">Notion AI</span><span class="lsep">·</span>
-  </div>
+<div class="apps-strip">
+ <div class="apps-label" data-t="strip_label">Works in ChatGPT, Claude, Gemini and most Windows apps</div>
+ <div class="apps-track" id="atrack">
+ <span class="app-item"><svg width="17" height="17" viewBox="0 0 24 24" fill="rgba(255,255,255,.5)"><path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073z"/></svg>ChatGPT</span><span class="asep">·</span>
+ <span class="app-item"><svg width="17" height="17" viewBox="0 0 46 46" fill="none"><path d="M32.73 10H26.3L23 17.39 19.7 10h-6.43L23 30.08Z" fill="rgba(255,255,255,.5)"/><path d="m36 26-3.27-6.93L23 36.56 13.27 19.07 10 26l13 10Z" fill="rgba(255,255,255,.3)"/></svg>Claude</span><span class="asep">·</span>
+ <span class="app-item"><img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg" style="opacity:.5" alt="">Gemini</span><span class="asep">·</span>
+ <span class="app-item"><svg width="17" height="17" viewBox="0 0 24 24"><path d="M11.5 2.75A9.25 9.25 0 0 0 2.75 12a9.25 9.25 0 0 0 9.25 9.25V2.75z" fill="#0078d4" opacity=".6"/><path d="M12.5 2.75V21.25A9.25 9.25 0 0 0 21.25 12a9.25 9.25 0 0 0-8.75-9.25z" fill="#50e6ff" opacity=".6"/></svg>Copilot</span><span class="asep">·</span>
+ <span class="app-item"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/notion.svg" style="filter:invert(.5) brightness(.8)" alt="">Notion AI</span><span class="asep">·</span>
+ <span class="app-item"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/discord.svg" style="filter:invert(.5) brightness(.8)" alt="">Discord</span><span class="asep">·</span>
+ <span class="app-item"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/gmail.svg" style="filter:grayscale(1) brightness(.6)" alt="">Gmail</span><span class="asep">·</span>
+ <span class="app-item"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/microsoftword.svg" style="filter:invert(.5) brightness(.8)" alt="">Word</span><span class="asep">·</span>
+ <span class="app-item"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/perplexity.svg" style="filter:invert(.5) brightness(.8)" alt="">Perplexity</span><span class="asep">·</span>
+ <span class="app-item"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="rgba(100,149,237,.25)"/><circle cx="12" cy="12" r="4.5" fill="rgba(100,149,237,.6)"/><circle cx="12" cy="12" r="1.8" fill="white"/></svg>DeepSeek</span><span class="asep">·</span>
+ <span class="app-item" style="color:rgba(255,255,255,.25)">Notepad</span><span class="asep">·</span>
+ <span class="app-item" style="color:rgba(255,255,255,.25)">Teams</span><span class="asep">·</span>
+ <span class="app-item" style="color:rgba(255,255,255,.25)">Outlook</span><span class="asep">·</span>
+ <span class="app-item"><svg width="17" height="17" viewBox="0 0 24 24" fill="rgba(255,255,255,.5)"><path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073z"/></svg>ChatGPT</span><span class="asep">·</span>
+ <span class="app-item"><svg width="17" height="17" viewBox="0 0 46 46" fill="none"><path d="M32.73 10H26.3L23 17.39 19.7 10h-6.43L23 30.08Z" fill="rgba(255,255,255,.5)"/><path d="m36 26-3.27-6.93L23 36.56 13.27 19.07 10 26l13 10Z" fill="rgba(255,255,255,.3)"/></svg>Claude</span><span class="asep">·</span>
+ <span class="app-item"><img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg" style="opacity:.5" alt="">Gemini</span><span class="asep">·</span>
+ <span class="app-item"><svg width="17" height="17" viewBox="0 0 24 24"><path d="M11.5 2.75A9.25 9.25 0 0 0 2.75 12a9.25 9.25 0 0 0 9.25 9.25V2.75z" fill="#0078d4" opacity=".6"/><path d="M12.5 2.75V21.25A9.25 9.25 0 0 0 21.25 12a9.25 9.25 0 0 0-8.75-9.25z" fill="#50e6ff" opacity=".6"/></svg>Copilot</span><span class="asep">·</span>
+ <span class="app-item"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/notion.svg" style="filter:invert(.5) brightness(.8)" alt="">Notion AI</span><span class="asep">·</span>
+ <span class="app-item"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/discord.svg" style="filter:invert(.5) brightness(.8)" alt="">Discord</span><span class="asep">·</span>
+ <span class="app-item"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/gmail.svg" style="filter:grayscale(1) brightness(.6)" alt="">Gmail</span><span class="asep">·</span>
+ <span class="app-item"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/microsoftword.svg" style="filter:invert(.5) brightness(.8)" alt="">Word</span><span class="asep">·</span>
+ <span class="app-item"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/perplexity.svg" style="filter:invert(.5) brightness(.8)" alt="">Perplexity</span><span class="asep">·</span>
+ <span class="app-item"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="rgba(100,149,237,.25)"/><circle cx="12" cy="12" r="4.5" fill="rgba(100,149,237,.6)"/><circle cx="12" cy="12" r="1.8" fill="white"/></svg>DeepSeek</span><span class="asep">·</span>
+ <span class="app-item" style="color:rgba(255,255,255,.25)">Notepad</span><span class="asep">·</span>
+ <span class="app-item" style="color:rgba(255,255,255,.25)">Teams</span><span class="asep">·</span>
+ <span class="app-item" style="color:rgba(255,255,255,.25)">Outlook</span><span class="asep">·</span>
+ </div>
 </div>
-
-<!-- STATS -->
-<div class="stats">
-  <div class="si reveal"><div class="snum">4<span class="a">×</span></div><div class="slbl" data-t="stat1">faster than typing<br>on keyboard</div></div>
-  <div class="si reveal d1"><div class="snum"><span class="a">10</span>s</div><div class="slbl" data-t="stat2">to install<br>VocalType</div></div>
-  <div class="si reveal d2"><div class="snum"><span class="a">7</span><span style="font-size:1.9rem;letter-spacing:-.5px" data-t="stat3_unit"> days</span></div><div class="slbl" data-t="stat3">free trial.<br>No credit card.</div></div>
-</div>
-
-<!-- HOW -->
 <section class="how" id="how">
-  <div>
-    <div class="stag reveal" data-t="how_tag">How it works</div>
-    <h2 class="reveal d1" data-t="how_h2">Ready in<br>30 seconds</h2>
-    <p class="ssub reveal d2" data-t="how_sub">Create your account in 30 seconds, install the app, and you're ready. Your shortcut, your rules.</p>
-    <div class="steps">
-      <div class="step reveal"><div class="snb">01</div><div class="sc"><h3 data-t="s1h">Install VocalType</h3><p data-t="s1p">Download and run the setup. Silent install in 10 seconds on Windows 10 or 11.</p></div></div>
-      <div class="step reveal d1"><div class="snb">02</div><div class="sc"><h3 data-t="s2h">Open your favorite AI</h3><p data-t="s2p">ChatGPT, Claude, Gemini… Any browser. Also works in every Windows app — Word, Teams, Discord, anything.</p></div></div>
-      <div class="step reveal d2"><div class="snb">03</div><div class="sc"><h3 data-t="s3h">Activate with your shortcut</h3><p data-t="s3p">Click any text field and press your shortcut. Default:</p><div class="kbd">Ctrl + Shift + Space</div><p class="snote" data-t="s3note">⚙️ Fully customizable in settings</p></div></div>
-      <div class="step reveal d3"><div class="snb">04</div><div class="sc"><h3 data-t="s4h">Speak naturally</h3><p data-t="s4p">Your voice becomes text in real time. Press again to paste into the field.</p></div></div>
-    </div>
-  </div>
-  <div class="how-vis">
-    <div class="wbig reveal">
-      <div class="win-bar"><div class="wd r"></div><div class="wd y"></div><div class="wd g"></div><div class="win-ttl">VocalType — Listening</div></div>
-      <div class="wbig-body">
-        <div style="font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:.1em" data-t="transcribing">Transcribing…</div>
-        <div class="tline"><span id="typed-how"></span><span class="cblink"></span></div>
-        <div style="margin-top:auto;padding-top:18px;border-top:1px solid var(--border)">
-          <div class="vbar" style="background:transparent;border:none;padding:0">
-            <div class="mic" style="width:30px;height:30px;font-size:.78rem">🎙️</div>
-            <div class="wf"><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div></div>
-            <div style="font-size:.73rem;color:var(--gold)" data-t="recording">● Recording</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+ <div>
+ <span class="stag rv" data-t="how_tag">How it works</span>
+ <h2 class="rv d1" data-t="how_h2">Ready in<br>30 seconds.</h2>
+ <p class="how-sub rv d2" data-t="how_sub">Install, open your AI, press the shortcut. That's it.</p>
+ <div class="steps">
+ <div class="step rv">
+ <div class="snum">01</div>
+ <div class="scontent">
+ <h3 data-t="s1h">Download & install</h3>
+ <p data-t="s1p">~15 MB. Runs silently in the background on Windows 10 & 11. Takes 10 seconds.</p>
+ </div>
+ </div>
+ <div class="step rv d1">
+ <div class="snum">02</div>
+ <div class="scontent">
+ <h3 data-t="s2h">Open any AI or text field</h3>
+ <p data-t="s2p">ChatGPT, Claude, Gemini in your browser — or Word, Notepad, Discord, Teams, anything on Windows.</p>
+ </div>
+ </div>
+ <div class="step rv d2">
+ <div class="snum">03</div>
+ <div class="scontent">
+ <h3 data-t="s3h">Press your shortcut</h3>
+ <p data-t="s3p">Click in the text field, press your shortcut, speak, press again. Done.</p>
+ <div class="kbd">Ctrl + Shift + Space</div>
+ <p class="snote" data-t="s3note">⚙️ Fully customizable in settings</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="how-right rv d1">
+ <div class="before-after">
+ <div class="ba-card">
+ <div class="ba-label bad">
+ <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+ <span data-t="before">Before</span>
+ </div>
+ <div class="ba-body" data-t="before_body">Typing a full ChatGPT prompt on keyboard</div>
+ <div class="ba-time" data-t="before_time">~45 sec</div>
+ </div>
+ <div class="ba-card">
+ <div class="ba-label good">
+ <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="9,12 11,14 15,10"/></svg>
+ <span data-t="after">After</span>
+ </div>
+ <div class="ba-body" data-t="after_body">Shortcut → speak the same prompt</div>
+ <div class="ba-time" data-t="after_time">~8 sec</div>
+ </div>
+ </div>
+ <div class="shortcut-demo">
+ <span data-t="sk_label">Your shortcut (customizable)</span>
+ <div class="keys">
+ <span class="key">Ctrl</span><span class="key">Shift</span><span class="key">Space</span>
+ </div>
+ </div>
+ </div>
 </section>
-
-<!-- FEATURES -->
-<section class="feats" id="features">
-  <div class="fhdr">
-    <div><div class="stag reveal" data-t="feat_tag">Features</div><h2 class="reveal d1" data-t="feat_h2">Everything<br>you need.</h2></div>
-    <p class="ssub reveal" style="max-width:280px" data-t="feat_sub">Simple, fast, discreet. Built for demanding AI users.</p>
-  </div>
-  <div class="fgrid">
-    <div class="fc wide reveal"><div class="ficon">🖥️</div><h3 data-t="fc1h">Works in every Windows app.</h3><p data-t="fc1p">ChatGPT, Claude, Gemini, Copilot, Notion AI — but also Word, Notepad, Discord, Gmail, Outlook, Teams. VocalType injects text directly into any active field on Windows. If you can type there, you can dictate there.</p></div>
-    <div class="fc reveal d1"><div class="ficon">⚡</div><h3 data-t="fc2h">Precise & Fast Mode</h3><p data-t="fc2p">Precise mode: perfect transcription after recording. Fast mode: text appears live as you speak.</p><span class="ftag" data-t="fc2tag">2 modes</span></div>
-    <div class="fc reveal d1"><div class="ficon">🔵</div><h3 data-t="fc3h">Ultra discreet</h3><p data-t="fc3p">A 22px dot in the corner. Disappears when idle. Zero visual impact on your apps.</p></div>
-    <div class="fc reveal d2"><div class="ficon">📋</div><h3 data-t="fc4h">Smart history</h3><p data-t="fc4p">Access your last 50 dictations. Re-paste a previous prompt in one click.</p></div>
-    <div class="fc reveal d2"><div class="ficon">⌨️</div><h3 data-t="fc5h">Custom shortcut</h3><p data-t="fc5p">Change the keyboard shortcut to match your habits. Configurable in 2 clicks in settings.</p><span class="ftag" data-t="fc5tag">Your key</span></div>
-    <div class="fc reveal d3"><div class="ficon">🔒</div><h3 data-t="fc6h">Private by design</h3><p data-t="fc6p">Your data stays on your PC. Audio is processed by Google Speech — never stored on our servers.</p></div>
-  </div>
+<section class="works" id="apps">
+ <div class="works-header">
+ <div>
+ <span class="stag rv" data-t="ww_tag">Compatible with</span>
+ <h2 class="rv d1" data-t="ww_h2">Your AI tools,<br>every Windows app.</h2>
+ </div>
+ <p class="rv" style="font-size:.9rem;color:var(--ink3);max-width:280px;line-height:1.6" data-t="ww_sub">If you can click there and type, VocalType works there.</p>
+ </div>
+ <div class="works-grid">
+ <div class="wcard rv">
+ <div class="wcard-icon" style="background:#f0faf5"><svg width="22" height="22" viewBox="0 0 24 24" fill="#10a37f"><path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073z"/></svg></div>
+ <div><div class="wcard-name">ChatGPT</div><div class="wcard-type">OpenAI</div></div>
+ </div>
+ <div class="wcard rv d1">
+ <div class="wcard-icon" style="background:#fdf8f0"><svg width="22" height="22" viewBox="0 0 46 46" fill="none"><path d="M32.73 10H26.3L23 17.39 19.7 10h-6.43L23 30.08Z" fill="#c9a84c"/><path d="m36 26-3.27-6.93L23 36.56 13.27 19.07 10 26l13 10Z" fill="rgba(201,168,76,.5)"/></svg></div>
+ <div><div class="wcard-name">Claude</div><div class="wcard-type">Anthropic</div></div>
+ </div>
+ <div class="wcard rv d2">
+ <div class="wcard-icon" style="background:#f0f4ff"><img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg" style="width:22px;height:22px" alt=""></div>
+ <div><div class="wcard-name">Gemini</div><div class="wcard-type">Google</div></div>
+ </div>
+ <div class="wcard rv d3">
+ <div class="wcard-icon" style="background:#f0f6ff"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M11.5 2.75A9.25 9.25 0 0 0 2.75 12a9.25 9.25 0 0 0 9.25 9.25V2.75z" fill="#0078d4"/><path d="M12.5 2.75V21.25A9.25 9.25 0 0 0 21.25 12a9.25 9.25 0 0 0-8.75-9.25z" fill="#50e6ff"/></svg></div>
+ <div><div class="wcard-name">Copilot</div><div class="wcard-type">Microsoft</div></div>
+ </div>
+ <div class="wcard rv">
+ <div class="wcard-icon" style="background:#f7f7f7"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/notion.svg" style="width:22px;height:22px;filter:invert(1) brightness(0)" alt=""></div>
+ <div><div class="wcard-name">Notion</div><div class="wcard-type">Notes & AI</div></div>
+ </div>
+ <div class="wcard rv d1">
+ <div class="wcard-icon" style="background:#f5f0ff"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/discord.svg" style="width:22px;height:22px;filter:invert(1) hue-rotate(220deg) brightness(.5) saturate(3)" alt=""></div>
+ <div><div class="wcard-name">Discord</div><div class="wcard-type">Chat</div></div>
+ </div>
+ <div class="wcard rv d2">
+ <div class="wcard-icon" style="background:#fff5f5"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/gmail.svg" style="width:22px;height:22px" alt=""></div>
+ <div><div class="wcard-name">Gmail</div><div class="wcard-type">Email</div></div>
+ </div>
+ <div class="wcard rv d3">
+ <div class="wcard-icon" style="background:#f0f4ff"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/microsoftword.svg" style="width:22px;height:22px;filter:hue-rotate(200deg) brightness(.9)" alt=""></div>
+ <div><div class="wcard-name">Word</div><div class="wcard-type">Documents</div></div>
+ </div>
+ </div>
+ <p class="more-apps rv" data-t="more_apps">+ <strong>Perplexity, DeepSeek, Mistral, Outlook, Teams, Notepad</strong> and any Windows text field.</p>
 </section>
-
-<!-- COMPAT -->
-<section class="compat">
-  <div class="stag reveal" data-t="compat_tag">Compatible with</div>
-  <h2 class="reveal d1" data-t="compat_h2">All your AIs.</h2>
-  <p class="ssub reveal d2" style="margin:0 auto;text-align:center" data-t="compat_sub">VocalType works with any interface accessible from Windows.</p>
-  <div class="amwrap">
-    <div class="am">
-      <div class="apill"><svg width="17" height="17" viewBox="0 0 24 24" fill="rgba(240,237,232,.7)"><path d="M22.282 9.821a5.985 5.985 0 00-.516-4.91 6.046 6.046 0 00-6.51-2.9A6.065 6.065 0 004.981 4.18a5.985 5.985 0 00-3.998 2.9 6.046 6.046 0 00.743 7.097 5.98 5.98 0 00.51 4.911 6.051 6.051 0 006.515 2.9A5.985 5.985 0 0013.26 24a6.056 6.056 0 005.772-4.206 5.99 5.99 0 003.997-2.9 6.056 6.056 0 00-.747-7.073z"/></svg> ChatGPT</div>
-      <div class="apill"><svg width="17" height="17" viewBox="0 0 46 46" fill="none"><path d="M32.73 10H26.3L23 17.39 19.7 10h-6.43L23 30.08 32.73 10Z" fill="rgba(205,178,145,.9)"/><path d="m36 26-3.27-6.93L23 36.56 13.27 19.07 10 26l13 10 13-10Z" fill="rgba(205,178,145,.5)"/></svg> Claude</div>
-      <div class="apill"><img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg" alt=""> Google Gemini</div>
-      <div class="apill"><svg width="17" height="17" viewBox="0 0 24 24"><path d="M11.5 2.75A9.25 9.25 0 002.75 12a9.25 9.25 0 009.25 9.25V2.75z" fill="#0078d4"/><path d="M12.5 2.75V21.25A9.25 9.25 0 0021.25 12a9.25 9.25 0 00-8.75-9.25z" fill="#50e6ff"/></svg> Copilot</div>
-      <div class="apill"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/perplexity.svg" style="filter:invert(1)" alt=""> Perplexity</div>
-      <div class="apill"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="rgba(100,149,237,.25)"/><circle cx="12" cy="12" r="4.5" fill="rgba(100,149,237,.6)"/><circle cx="12" cy="12" r="1.8" fill="white"/></svg> DeepSeek</div>
-      <div class="apill"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/mistral.svg" style="filter:invert(1)" alt=""> Mistral</div>
-      <div class="apill"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/notion.svg" style="filter:invert(1)" alt=""> Notion AI</div>
-      <div class="apill"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/gmail.svg" alt=""> Gmail</div>
-      <div class="apill"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/discord.svg" style="filter:invert(1)" alt=""> Discord</div>
-      <div class="apill"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/microsoftword.svg" style="filter:invert(1)" alt=""> Word</div>
-      <div class="apill"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/microsoftteams.svg" style="filter:invert(1)" alt=""> Teams</div>
-      <!-- duplicate -->
-      <div class="apill"><svg width="17" height="17" viewBox="0 0 24 24" fill="rgba(240,237,232,.7)"><path d="M22.282 9.821a5.985 5.985 0 00-.516-4.91 6.046 6.046 0 00-6.51-2.9A6.065 6.065 0 004.981 4.18a5.985 5.985 0 00-3.998 2.9 6.046 6.046 0 00.743 7.097 5.98 5.98 0 00.51 4.911 6.051 6.051 0 006.515 2.9A5.985 5.985 0 0013.26 24a6.056 6.056 0 005.772-4.206 5.99 5.99 0 003.997-2.9 6.056 6.056 0 00-.747-7.073z"/></svg> ChatGPT</div>
-      <div class="apill"><svg width="17" height="17" viewBox="0 0 46 46" fill="none"><path d="M32.73 10H26.3L23 17.39 19.7 10h-6.43L23 30.08 32.73 10Z" fill="rgba(205,178,145,.9)"/><path d="m36 26-3.27-6.93L23 36.56 13.27 19.07 10 26l13 10 13-10Z" fill="rgba(205,178,145,.5)"/></svg> Claude</div>
-      <div class="apill"><img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg" alt=""> Google Gemini</div>
-      <div class="apill"><svg width="17" height="17" viewBox="0 0 24 24"><path d="M11.5 2.75A9.25 9.25 0 002.75 12a9.25 9.25 0 009.25 9.25V2.75z" fill="#0078d4"/><path d="M12.5 2.75V21.25A9.25 9.25 0 0021.25 12a9.25 9.25 0 00-8.75-9.25z" fill="#50e6ff"/></svg> Copilot</div>
-      <div class="apill"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/perplexity.svg" style="filter:invert(1)" alt=""> Perplexity</div>
-      <div class="apill"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="rgba(100,149,237,.25)"/><circle cx="12" cy="12" r="4.5" fill="rgba(100,149,237,.6)"/><circle cx="12" cy="12" r="1.8" fill="white"/></svg> DeepSeek</div>
-      <div class="apill"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/mistral.svg" style="filter:invert(1)" alt=""> Mistral</div>
-      <div class="apill"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/notion.svg" style="filter:invert(1)" alt=""> Notion AI</div>
-      <div class="apill"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/gmail.svg" alt=""> Gmail</div>
-      <div class="apill"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/discord.svg" style="filter:invert(1)" alt=""> Discord</div>
-      <div class="apill"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/microsoftword.svg" style="filter:invert(1)" alt=""> Word</div>
-      <div class="apill"><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/microsoftteams.svg" style="filter:invert(1)" alt=""> Teams</div>
-    </div>
-  </div>
+<section class="usecases">
+ <div class="usecases-inner">
+ <span class="stag rv" data-t="uc_tag">Use cases</span>
+ <h2 class="rv d1" data-t="uc_h2">Who uses VocalType.</h2>
+ <div class="uc-grid">
+ <div class="uc-card rv">
+ <div class="uc-icon">⚡</div>
+ <h3 data-t="uc1h">Prompt writing</h3>
+ <p data-t="uc1p">You write 20+ prompts a day. VocalType cuts that to seconds per prompt — just speak, paste, done.</p>
+ <div class="uc-ex">
+ <span class="uc-tag">ChatGPT</span>
+ <span class="uc-tag">Claude</span>
+ <span class="uc-tag">Gemini</span>
+ </div>
+ </div>
+ <div class="uc-card rv d1">
+ <div class="uc-icon">✉️</div>
+ <h3 data-t="uc2h">Email & writing</h3>
+ <p data-t="uc2p">Dictate emails, Slack messages, documents. Way faster than typing, especially for long answers.</p>
+ <div class="uc-ex">
+ <span class="uc-tag">Gmail</span>
+ <span class="uc-tag">Outlook</span>
+ <span class="uc-tag">Word</span>
+ </div>
+ </div>
+ <div class="uc-card rv d2">
+ <div class="uc-icon">📝</div>
+ <h3 data-t="uc3h">Notes & ideas</h3>
+ <p data-t="uc3p">Capture ideas the moment you have them. Speak into Notion, Notepad or any other note app on Windows.</p>
+ <div class="uc-ex">
+ <span class="uc-tag">Notion</span>
+ <span class="uc-tag">Notepad</span>
+ <span class="uc-tag">Teams</span>
+ </div>
+ </div>
+ </div>
+ </div>
 </section>
-
-<!-- TESTIMONIALS -->
-<section class="tests">
-  <div class="stag reveal" data-t="test_tag">Reviews</div>
-  <h2 class="reveal d1" data-t="test_h2">They stopped<br>typing.</h2>
-  <div class="tgrid">
-    <div class="tcard reveal"><div class="tstars">★★★★★</div><p class="tq" data-t="test1">"I spend my days on ChatGPT. Since VocalType, I dictate my prompts in 10 seconds instead of typing for 2 minutes. Game changer."</p><div class="tauthor"><div class="tav">M</div><div><div class="tname">Marc D.</div><div class="trole" data-t="test1_role">Marketing consultant</div></div></div></div>
-    <div class="tcard reveal d1"><div class="tstars">★★★★★</div><p class="tq" data-t="test2">"Fast mode is incredible. Text appears while I'm still speaking. Literally 4x faster than typing on Gemini."</p><div class="tauthor"><div class="tav">S</div><div><div class="tname">Sophie L.</div><div class="trole" data-t="test2_role">Freelance developer</div></div></div></div>
-    <div class="tcard reveal d2"><div class="tstars">★★★★★</div><p class="tq" data-t="test3">"Works in every app, not just the browser. I use it in Notepad, Teams, everywhere. Exactly what I needed."</p><div class="tauthor"><div class="tav">A</div><div><div class="tname">Alex P.</div><div class="trole" data-t="test3_role">Growth hacker</div></div></div></div>
+<!-- WHY VOCALTYPE -->
+<section class="why">
+ <div class="why-inner">
+  <span class="stag rv" data-t="why_tag">Why VocalType</span>
+  <h2 class="rv d1" data-t="why_h2">Built for AI users,<br>not dictation fans.</h2>
+  <div class="why-grid">
+   <div class="why-card rv">
+    <div class="why-icon">🖥️</div>
+    <h3 data-t="w1h">Works everywhere on Windows</h3>
+    <p data-t="w1p">Not just in the browser. Press your shortcut in ChatGPT, Claude, Word, Notepad, Teams — any text field on Windows gets your voice instantly.</p>
+   </div>
+   <div class="why-card rv d1">
+    <div class="why-icon">⚡</div>
+    <h3 data-t="w2h">Instant transcription</h3>
+    <p data-t="w2p">Fast mode: text appears as you speak. Precise mode: perfect accuracy after recording. One shortcut, two modes, zero friction.</p>
+   </div>
+   <div class="why-card rv d2">
+    <div class="why-icon">🔒</div>
+    <h3 data-t="w3h">Your audio stays private</h3>
+    <p data-t="w3p">Audio is transcribed and discarded. We never store your voice recordings. Your prompts and ideas stay yours.</p>
+   </div>
   </div>
+ </div>
 </section>
-
 <!-- PRICING -->
 <section class="pricing" id="pricing">
-  <div class="pinner">
-    <div class="pcopy reveal">
-      <div class="stag" data-t="price_tag">Pricing</div>
-      <h2 data-t="price_h2">7 days free.<br>Then decide.</h2>
-      <p data-t="price_p">Try VocalType free for 7 days. All features unlocked. No credit card required to start.</p>
-      <div class="vslist">
-        <div class="vsrow"><span class="vsck">✓</span><span data-t="vs1">Wispr Flow costs $14/mo — try VocalType free for 7 days</span></div>
-        <div class="vsrow"><span class="vsck">✓</span><span data-t="vs2">100% customizable shortcut</span></div>
-        <div class="vsrow"><span class="vsck">✓</span><span data-t="vs3">Works in every Windows app, not just the browser</span></div>
-        <div class="vsrow"><span class="vsck">✓</span><span data-t="vs4">Audio processed locally, never stored on our servers</span></div>
-      </div>
-    </div>
-    <div class="pcard reveal d1">
-      <div class="pbadge" data-t="price_badge">🎉 7-Day Free Trial</div>
-      <div class="pamount"><span>$</span>0<sub data-t="price_per">/7 days</sub></div>
-      <p class="pnote" data-t="price_note">Then continue at the launch rate — no surprises</p>
-      <ul class="pfeats">
-        <li><div class="ck">✓</div><span data-t="pf1">Unlimited dictation in all AIs</span></li>
-        <li><div class="ck">✓</div><span data-t="pf2">Works in every Windows application</span></li>
-        <li><div class="ck">✓</div><span data-t="pf3">Precise mode + Fast mode</span></li>
-        <li><div class="ck">✓</div><span data-t="pf4">50-dictation history</span></li>
-        <li><div class="ck">✓</div><span data-t="pf5">Customizable shortcut</span></li>
-        <li><div class="ck">✓</div><span data-t="pf6">French, English & more</span></li>
-        <li><div class="ck">✓</div><span data-t="pf7">Updates included</span></li>
-        <li><div class="ck">✓</div><span data-t="pf8">Account required (email only)</span></li>
-      </ul>
-      <a class="btn-dl-full" href="https://github.com/lazogrowth-glitch/lazox/releases/download/v1.1/VocalType_Setup.exe">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17"/></svg>
-        <span data-t="price_btn">Start free trial — 7 days</span>
-      </a>
-      <p class="pcompat">Windows 10 & 11 · ~15 MB</p>
-    </div>
+ <span class="stag rv" data-t="p_tag">Pricing</span>
+ <h2 class="rv d1" data-t="p_h2">Simple pricing.<br>Start free.</h2>
+ <div class="pricing-inner pricing-4">
+  <!-- Trial -->
+  <div class="pcard rv">
+   <div class="pcard-name" data-t="p1_name">Free Trial</div>
+   <div class="pcard-price"><sup>$</sup>0</div>
+   <div class="pcard-sub" data-t="p1_sub">7 days, all features unlocked</div>
+   <div class="pcard-mins">🎙️ <span data-t="p1_mins">Full access · 7 days</span></div>
+   <ul class="pfeats">
+    <li data-t="p1_f1">Unlimited dictation for 7 days</li>
+    <li data-t="p1_f2">Precise mode + Fast mode</li>
+    <li data-t="p1_f3">Works in ChatGPT, Claude, Gemini and most Windows apps</li>
+    <li data-t="p1_f4">Customizable shortcut</li>
+    <li data-t="p1_f5">Account required (email only)</li>
+   </ul>
+   <a class="pbtn outline" href="https://vocaltype.app/download" data-t="p1_btn">Download & start trial</a>
+   <p class="pbtn-note" data-t="p1_note">Windows 10 & 11 · ~15 MB</p>
   </div>
+  <!-- Starter -->
+  <div class="pcard rv d1">
+   <div class="pcard-name" data-t="p2_name">Starter</div>
+   <div class="pcard-price"><sup>$</sup>5<span data-t="p2_mo">/mo</span></div>
+   <div class="pcard-sub" data-t="p2_sub">For regular AI users</div>
+   <div class="pcard-mins">🎙️ <span data-t="p2_mins">300 minutes / month</span></div>
+   <ul class="pfeats">
+    <li data-t="p2_f1">300 min of dictation / month</li>
+    <li data-t="p2_f2">Precise mode + Fast mode</li>
+    <li data-t="p2_f3">Works in all Windows apps</li>
+    <li data-t="p2_f4">Customizable shortcut</li>
+    <li data-t="p2_f5">50-dictation history</li>
+   </ul>
+   <a class="pbtn outline" href="https://vocaltype.app/download" data-t="p2_btn">Start free trial</a>
+   <p class="pbtn-note" data-t="p2_note">7-day free trial included</p>
+  </div>
+  <!-- Pro -->
+  <div class="pcard featured rv d2">
+   <div class="pcard-badge" data-t="p3_badge">Most popular</div>
+   <div class="pcard-name" data-t="p3_name">Pro</div>
+   <div class="pcard-price"><sup>$</sup>12<span data-t="p3_mo">/mo</span></div>
+   <div class="pcard-sub" data-t="p3_sub">For daily power users</div>
+   <div class="pcard-mins">🎙️ <span data-t="p3_mins">1,000 minutes / month</span></div>
+   <ul class="pfeats">
+    <li data-t="p3_f1">1,000 min of dictation / month</li>
+    <li data-t="p3_f2">Everything in Starter</li>
+    <li data-t="p3_f3">Priority processing speed</li>
+    <li data-t="p3_f4">200-dictation history</li>
+    <li data-t="p3_f5">Early access to new features</li>
+   </ul>
+   <a class="pbtn dark" href="https://vocaltype.app/download" data-t="p3_btn">Start free trial</a>
+   <p class="pbtn-note" data-t="p3_note">7-day free trial included</p>
+  </div>
+  <!-- Unlimited -->
+  <div class="pcard rv d3">
+   <div class="pcard-name" data-t="p4_name">Unlimited</div>
+   <div class="pcard-price"><sup>$</sup>25<span data-t="p4_mo">/mo</span></div>
+   <div class="pcard-sub" data-t="p4_sub">For heavy daily use</div>
+   <div class="pcard-mins">🎙️ <span data-t="p4_mins">Fair use · no cap</span></div>
+   <ul class="pfeats">
+    <li data-t="p4_f1">Unlimited dictation (fair use)</li>
+    <li data-t="p4_f2">Everything in Pro</li>
+    <li data-t="p4_f3">Highest priority processing</li>
+    <li data-t="p4_f4">Unlimited history</li>
+    <li data-t="p4_f5">Priority support</li>
+   </ul>
+   <a class="pbtn outline" href="https://vocaltype.app/download" data-t="p4_btn">Start free trial</a>
+   <p class="pbtn-note" data-t="p4_note">7-day free trial included</p>
+  </div>
+ </div>
+ <div class="pricing-note rv">
+  <strong data-t="pn_title">How dictation minutes work:</strong> <span data-t="pn_body">Each minute of speech = 1 minute deducted. Unused minutes don't roll over. The free 7-day trial includes full access with no minute cap.</span>
+ </div>
 </section>
-
-<!-- CTA -->
 <section class="cta">
-  <div class="cta-glow"></div>
-  <div class="hero-badge reveal" style="margin:0 auto 26px"><div class="bdot"></div><span data-t="cta_badge">Ready to dictate</span></div>
-  <h2 class="reveal d1">Stop<br><span class="em" data-t="cta_h2">typing.</span></h2>
-  <p class="reveal d2" data-t="cta_p">Save hours every week. Install VocalType in 10 seconds.</p>
-  <div class="cta-acts reveal d3">
-    <a class="btn-dl" href="https://github.com/lazogrowth-glitch/lazox/releases/download/v1.1/VocalType_Setup.exe">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17"/></svg>
-      <span data-t="cta_btn">Start free trial — 7 days</span>
-    </a>
-    <a class="btn-ghost" href="https://github.com/lazogrowth-glitch/lazox">GitHub →</a>
-  </div>
-  <p style="margin-top:18px;font-size:.76rem;color:var(--text3)">Windows 10 & 11 · ~15 MB</p>
+ <h2 data-t="cta_h2">Start speaking.<br>Stop typing.</h2>
+ <p data-t="cta_sub">Install in 10 seconds. Try 7 days free. No credit card to start.</p>
+ <a class="btn-primary" href="https://vocaltype.app/download">
+ <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17"/></svg>
+ <span data-t="cta_btn">Download VocalType — Free</span>
+ </a>
+ <p class="cta-note">Windows 10 & 11 · ~15 MB · Account required (email only)</p>
 </section>
-
-<!-- FOOTER -->
 <footer>
-  <div class="flogo">Vocal<span>Type</span></div>
-  <div class="flinks"><a href="https://github.com/lazogrowth-glitch/lazox">GitHub</a><a href="#how" data-t="nav_how">How it works</a><a href="#features" data-t="nav_feat">Features</a></div>
-  <div class="fcopy">© 2025 VocalType. <span data-t="footer_copy">Speak to AI.</span></div>
+ <div class="flogo"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYAAACM/rhtAAAHU0lEQVR4nO2Zf4xcVRXHP/fd+97MvpnZnW23UFpSWkpbqvwQbXUlUUqbYIhNRMRYGlGjEINp+IMECRpqQlAxBiNUozQ1MRqD2pqY8CMuUJqKtFu6tVApkP6AtpZ0ge3O7Mzsmx/vvnv8Y9ql3R12l90a+IOTvGSSe+e+zzvfe8657zwVhqHwITbvgwaYyD4CnK59BDhdM+dqIaUUntd8XuccIhMmB1EKTk1T/1dArTXWWoaHhwHwfZ+2tjastS3nK4U4h0oSwfMU6j3xzoHEWmvK5TJBEHDddddx/fXXM2fOHEqlEqrFnT1PSWxF+UbV7/zWxzZ1ZP0BmwhK0dLl0wL0PI9yuczatWvZuXMnPT09PPnkk+zevZv169fTaDRGPYySas2qdKCjn9999caf/OizfbffvGiz0So+JfUYSDXVSnLac2vWrOHRRx8FmnvvNDjAhg0buOOOO8jlciiclMoNdeklMyoPfv9TBz/ffdFTbxwrFRddmBr+wm1Prdnx4sDVqcBzImc7bUqASimcc6RSKfr6+rj44otJkgRjzAiocw6lFN3d3ezdu5dEjFy5JM9v71v58sIL05Ujx4vJ7Au6njauVtn8j8Pz7vnli+toKnrWvpiSxJ7nUa1W6e7uZuHChYjICNzpcWh6+cYbv0ySJKz7+pX8/VerVFdenV9PgsRola1XqxfE+FyzbHZ/Z3swkCSilMJNG/C0KaUmk05QCj63/EKVy2UpFqNZnpJsOp2ycRzPVp7RM/LpOEzrsmux1LSjuFWkjh4Xgd9t3o/WRozxlLU2FQR+Ui43wmq1YYxRorWXtPr/B1ZJRAStlTOeEuMpCdO62mretABFZEKJm8ECt3714ySJVUninDGmHsdWh2m/5hs/qTWcVx6Oc+cc0Pf9cSUWEYIgAIF/7j4u5XKFXK6tmDgZrtXqxk/5/aJsMlis+VEtyXotlpoUoFKcVY6ccwRBwL59+ygUCojISA48E04pxXPP/QuU4td/2scN67bKYIk3w5TzRKSSams74ROzva9/dqHU6NJayeg8OCGgEyG2grXvSikipNNpjh49ykMPPYTWGgBr7cjl+z5bt27lscceIwxDcqHhpVcH1XfueXb+M88fTc+9oOv5SqXW6Gz34789fWx5I3a6VbkbF1AE0oFmRkdAvj11lhettWQyGR544AE2bNgwkqhPXz09Pdxyyy1NiQGbOJXLBfLaG4Xcxs2vLzn+9nC44Pyg8ODvX17at39weeB7IjL2VPOelURrRaXS4NtfWcRdt15OKfK54XtPMDBYxfc9RN7Ng1EUsWzZMlavXo0xht7eXh5//HGCIMD3/VNyQxw7uma0yfN/uUnZeqX+2uGTf/zmD3beEFXtaXnHAI573BKBTJtmZj6N0gabjN1nALlcjj179tDX1zcyls1mW0Z5kjg1HFk5r8NPPbOz/9bBQpX29hTWSstom3APlodjypU6uYzhiiWzsNbijYrcJEnIZDK0t7fT3t5OLpcbc2j1lMJay2VLZjEzH6hKFMtQpSGgxs1U7wkoAtp47HzpJO8MVkkHws2rF+Nc6+rhnBsJkCQZWxSaBwxYu3oxKV94ZzBSvS+dVNp4yrWqcRMBOiekU4ZDx8ocOFKiUo5Y2T2XBfPyRNUYrccvcWea1oqoGrNgXp6V3XOplCMOHClx6FiZdMowJQ9CM/e5RNi05RCFUpXAJGy8fxXKU8QNh26VWUfDnZqrPMXG+1cRmIRCqcqmLYdwzZP0uDYuoHNCJjRsf6GfbbtOUI0irlraycP3rsCJUK1ZjPbQp94rzry0pzDao1qzOBEevncFVy3tpBpFbNt1gu0v9JMJDePJC5M4sCrVBM2GPn/46dUsmt9JPt/Bv18tcPv6Zzl8tAAogpRGoRCauaJeTwBh4UWd/Oa+lXxyaSfF4hAHjxT4xj07qEQxnqfGlXdSgACepxiOLJcvzvOzO69i0fw8bWFIw2qe7X2TPz9xgH2vDSACntcMsCsu7WLNFxezsnsugUmoRhEHjxS5+xd7+c+B4qS8N2lAaEpWiSxdnSl++N3LuPYzs8l3hOQyIXWrKJYaxNbhGw0K8lmflC+UhyOKQxHbdvXz40deZqBQJxsakknAvS9AaHrSWketZrnm07O57aZLWDS/nfO7MoRtPoVilWotZuaMEBHhxNvDHDhSYtOWQ2x/oZ902mCMNynPTQkQmnvSU4pyZPG1YuG8HJ+4tBNjFF9aMYfFF+X461P/5ZXDJV45PMTrxyvEVsiFBicy4Z4bbe+7syACiQjZU3vo9eMVFNCwjmuXn0cQaPYfGmL/wSEGhhoYrUgHetKSjrYpvxcrBdYKMzoCeh5ZQWdHQKliSZwjndLksz5fu2sH23rfIpv135esZ9q0ejNKQSN2PN37Fpk2jThQHiROSPuak8U6Wk+cSsa9x3R71EIz541ZRCAVeHiTqDbj2bS7WwoI06b5Q84emKqsZ9o5ab85kbFtn3P07eBD32H9HwnPb0XhwLTWAAAAAElFTkSuQmCC" alt="" style="height:22px;width:22px;border-radius:5px;vertical-align:middle;margin-right:7px;display:inline-block">Vocal<em>Type</em></div>
+ <div class="flinks">
+ <a href="https://github.com/lazogrowth-glitch/lazox">GitHub</a>
+ <a href="#how" data-t="n_how">How it works</a>
+ <a href="#pricing" data-t="n_price">Pricing</a>
+ </div>
+ <div class="fcopy">© 2025 VocalType</div>
 </footer>
-
 <script>
-const T={
-en:{nav_how:"How it works",nav_feat:"Features",nav_price:"Pricing",nav_dl:"Download",badge:"7-day free trial",h1_1:"Stop typing.",h1_2:"Just",h1_3:"speak.",hero_desc:'VocalType turns your voice into text in <strong>every AI tool</strong> — ChatGPT, Claude, Gemini, Copilot. On Windows, everywhere, instantly.',btn_trial:"Start free trial — 7 days",btn_how:"See how it works",proof:'<strong>Already used by hundreds</strong> of AI power users',demo_ai:"Sure! Here's a polished professional email for you…",you:"You",vt_active:"VocalType active",chip_claude:"Claude · Active",chip_gemini:"Gemini · Ready",stat1:"faster than typing<br>on keyboard",stat2:"to install<br>VocalType",stat3_unit:" days",stat3:"free trial.<br>No credit card.",how_tag:"How it works",how_h2:"Ready in<br>30 seconds",how_sub:"Create your account in 30 seconds, install the app, and you're ready. Your shortcut, your rules.",step1_h:"Install VocalType",step1_p:"Download and run the setup. Silent install in 10 seconds on Windows 10 or 11.",step2_h:"Open your favorite AI",step2_p:"ChatGPT, Claude, Gemini… In any browser — or any Windows app: Word, Discord, Teams, Notepad.",step3_h:"Activate with your shortcut",step3_p:"Click any text field and press your shortcut. Default:",step3_note:"⚙️ Fully customizable shortcut in settings",step4_h:"Speak naturally",step4_p:"Your voice becomes text in real time. Press again to paste into the field.",transcribing:"Transcribing…",recording:"● Recording",feat_tag:"Features",feat_h2:"Everything<br>you need.",feat_sub:"Simple, fast, discreet. Built for demanding AI users.",fc1_h:"Works in every Windows app.",fc1_p:"ChatGPT, Claude, Gemini, Copilot, Notion AI — but also Word, Notepad, Discord, Gmail, Outlook, Teams. VocalType injects text directly into any active field on Windows.",fc2_h:"Precise & Fast Mode",fc2_p:"Precise mode: perfect transcription after recording. Fast mode: text appears live as you speak.",fc2_tag:"2 modes",fc3_h:"Ultra discreet",fc3_p:"A 22px dot in the top corner. Disappears when idle. Zero visual impact on your apps.",fc4_h:"Smart history",fc4_p:"Access your last 50 dictations. Re-paste a previous prompt in one click.",fc5_h:"Custom shortcut",fc5_p:"Change the keyboard shortcut to match your habits. Fully configurable in 2 clicks in settings.",fc5_tag:"Your key",fc6_h:"Private by design",fc6_p:"Your data stays on your PC. Audio is processed by Google Speech — never stored on our servers.",compat_tag:"Compatible with",compat_h2:"All your AIs.",compat_sub:"VocalType works with any interface accessible from Windows.",test_tag:"Reviews",test_h2:"They stopped<br>typing.",test1:'"I spend my days on ChatGPT. Since VocalType, I dictate my prompts in 10 seconds instead of typing for 2 minutes. Game changer."',test1_role:"Marketing consultant",test2:'"Fast mode is incredible. Text appears while I\'m still speaking. Literally 4x faster than typing on Gemini."',test2_role:"Freelance developer",test3:'"Works in every app, not just the browser. I use it in Notepad, Teams, everywhere. Exactly what I needed."',test3_role:"Growth hacker",price_tag:"Pricing",price_h2:"7 days free.<br>Then decide.",price_p:"Try VocalType free for 7 days. All features unlocked. No credit card required to start.",vs1:"Wispr Flow costs $14/mo — try VocalType free for 7 days",vs2:"100% customizable shortcut",vs3:"Works in every Windows app, not just the browser",vs4:"Audio processed locally, never stored on our servers",price_badge:"🎉 7-Day Free Trial",price_per:"/7 days",price_note:"Then continue at the launch rate — no surprises",pf1:"Unlimited dictation in all AIs",pf2:"Works in every Windows application",pf3:"Precise mode + Fast mode",pf4:"50-dictation history",pf5:"Customizable shortcut",pf6:"French, English & more",pf7:"Updates included",pf8:"Account required (email only)",price_btn:"Start free trial — 7 days",cta_badge:"Ready to dictate",cta_h2:"typing.",cta_p:"Save hours every week. Install VocalType in 10 seconds.",cta_btn:"Start free trial — 7 days",footer_copy:"Speak to AI."},
-fr:{nav_how:"Comment ça marche",nav_feat:"Fonctionnalités",nav_price:"Tarif",nav_dl:"Télécharger",badge:"7 jours d'essai gratuit",h1_1:"Arrêtez de taper.",h1_2:"Parlez",h1_3:"simplement.",hero_desc:'VocalType transforme votre voix en texte dans <strong>toutes vos IA</strong> — ChatGPT, Claude, Gemini, Copilot. Sur Windows, partout, instantanément.',btn_trial:"Essai gratuit — 7 jours",btn_how:"Voir comment ça marche",proof:'<strong>Déjà utilisé par des centaines</strong> d\'utilisateurs IA',demo_ai:"Bien sûr ! Voici une version soignée de votre email…",you:"Vous",vt_active:"VocalType actif",chip_claude:"Claude · Actif",chip_gemini:"Gemini · Prêt",stat1:"plus rapide que la frappe<br>au clavier",stat2:"pour installer<br>VocalType",stat3_unit:" jours",stat3:"d'essai gratuit.<br>Sans carte bancaire.",how_tag:"Comment ça marche",how_h2:"Prêt en<br>30 secondes",how_sub:"Créez votre compte en 30 secondes, installez l'app, et vous êtes prêt. Votre raccourci, vos règles.",step1_h:"Installez VocalType",step1_p:"Téléchargez et lancez le setup. Installation silencieuse en 10 secondes sur Windows 10 ou 11.",step2_h:"Ouvrez votre IA favorite",step2_p:"ChatGPT, Claude, Gemini… Dans n'importe quel navigateur ou app Windows.",step3_h:"Activez avec votre raccourci",step3_p:"Cliquez dans n'importe quel champ et appuyez sur votre raccourci. Par défaut :",step3_note:"⚙️ Raccourci 100% personnalisable dans les paramètres",step4_h:"Parlez naturellement",step4_p:"Votre voix devient du texte en temps réel. Re-appuyez pour coller.",transcribing:"Transcription en cours…",recording:"● Enregistrement",feat_tag:"Fonctionnalités",feat_h2:"Tout ce qu'il<br>vous faut.",feat_sub:"Simple, rapide, discret. Conçu pour les utilisateurs d'IA exigeants.",fc1_h:"Fonctionne dans toutes les apps Windows.",fc1_p:"ChatGPT, Claude, Gemini, Copilot, Notion AI — mais aussi Word, Bloc-notes, Discord, Gmail, Outlook, Teams. VocalType injecte le texte directement dans n'importe quel champ actif.",fc2_h:"Mode Précis & Rapide",fc2_p:"Mode précis : transcription parfaite après enregistrement. Mode rapide : texte en direct pendant que vous parlez.",fc2_tag:"2 modes",fc3_h:"Ultra discret",fc3_p:"Un point de 22px dans le coin supérieur. Disparaît en inactivité.",fc4_h:"Historique intelligent",fc4_p:"Accédez à vos 50 dernières dictées. Recollez un prompt précédent en un clic.",fc5_h:"Raccourci personnalisable",fc5_p:"Changez le raccourci clavier selon vos habitudes. Configuré en 2 clics.",fc5_tag:"Votre touche",fc6_h:"Privé par design",fc6_p:"Vos données restent sur votre PC. L'audio est traité par Google Speech — jamais stocké sur nos serveurs.",compat_tag:"Compatible avec",compat_h2:"Toutes vos IA.",compat_sub:"VocalType fonctionne avec toute interface accessible depuis Windows.",test_tag:"Avis",test_h2:"Ils ont arrêté<br>de taper.",test1:'"Je passe mes journées sur ChatGPT. Depuis VocalType, je dicte mes prompts en 10 secondes au lieu d\'en taper pendant 2 minutes."',test1_role:"Consultant marketing",test2:'"Le mode rapide est incroyable. Le texte apparaît pendant que je parle. 4x plus rapide."',test2_role:"Développeuse freelance",test3:'"Fonctionne dans toutes les apps. Je l\'utilise dans Notepad, Teams, partout."',test3_role:"Growth hacker",price_tag:"Tarif",price_h2:"7 jours gratuits.<br>Puis décidez.",price_p:"Essayez VocalType gratuitement pendant 7 jours. Toutes les fonctionnalités. Sans carte bancaire pour commencer.",vs1:"Wispr Flow coûte 14$/mois — essayez VocalType gratuitement 7 jours",vs2:"Raccourci 100% personnalisable",vs3:"Fonctionne dans toutes les apps Windows",vs4:"Audio traité localement, jamais sur nos serveurs",price_badge:"🎉 7 Jours Gratuits",price_per:"/7 jours",price_note:"Puis continuez au tarif de lancement — sans surprise",pf1:"Dictée illimitée dans toutes les IA",pf2:"Compatible toutes applications Windows",pf3:"Mode précis + Mode rapide",pf4:"Historique 50 dictées",pf5:"Raccourci personnalisable",pf6:"Français, Anglais & plus",pf7:"Mises à jour incluses",pf8:"Compte requis (email seulement)",price_btn:"Démarrer l'essai gratuit — 7 jours",cta_badge:"Prêt à dicter",cta_h2:"taper.",cta_p:"Gagnez des heures chaque semaine. Installez VocalType en 10 secondes.",cta_btn:"Essai gratuit — 7 jours",footer_copy:"Parlez à l'IA."},
-es:{nav_how:"Cómo funciona",nav_feat:"Funciones",nav_price:"Precio",nav_dl:"Descargar",badge:"Prueba gratuita 7 días",h1_1:"Deja de escribir.",h1_2:"Solo",h1_3:"habla.",hero_desc:'VocalType convierte tu voz en texto en <strong>todas tus IAs</strong>. En Windows, en todas partes, al instante.',btn_trial:"Prueba gratis — 7 días",btn_how:"Ver cómo funciona",proof:'<strong>Ya usado por cientos</strong> de usuarios de IA',demo_ai:"¡Claro! Aquí tienes un email profesional pulido…",you:"Tú",vt_active:"VocalType activo",chip_claude:"Claude · Activo",chip_gemini:"Gemini · Listo",stat1:"más rápido que escribir",stat2:"para instalar<br>VocalType",stat3_unit:" días",stat3:"de prueba gratis.<br>Sin tarjeta.",how_tag:"Cómo funciona",how_h2:"Listo en<br>30 segundos",how_sub:"Crea tu cuenta en 30 segundos, instala la app y estarás listo.",step1_h:"Instala VocalType",step1_p:"Descarga y ejecuta el instalador. Instalación silenciosa en 10 segundos.",step2_h:"Abre tu IA favorita",step2_p:"ChatGPT, Claude, Gemini… En cualquier navegador o app de Windows.",step3_h:"Activa con tu atajo",step3_p:"Haz clic en cualquier campo y presiona tu atajo. Por defecto:",step3_note:"⚙️ Atajo 100% personalizable en ajustes",step4_h:"Habla con naturalidad",step4_p:"Tu voz se convierte en texto en tiempo real. Presiona de nuevo para pegar.",transcribing:"Transcribiendo…",recording:"● Grabando",feat_tag:"Funciones",feat_h2:"Todo lo que<br>necesitas.",feat_sub:"Simple, rápido, discreto.",fc1_h:"Funciona en todas las apps de Windows.",fc1_p:"ChatGPT, Claude, Gemini, Copilot — pero también Word, Notepad, Discord, Gmail, Teams.",fc2_h:"Modo Preciso y Rápido",fc2_p:"Modo preciso: transcripción perfecta. Modo rápido: texto en vivo.",fc2_tag:"2 modos",fc3_h:"Ultra discreto",fc3_p:"Un punto de 22px en la esquina. Desaparece en inactividad.",fc4_h:"Historial inteligente",fc4_p:"Accede a tus últimas 50 dictadas. Pega un prompt anterior con un clic.",fc5_h:"Atajo personalizable",fc5_p:"Cambia el atajo según tus hábitos. Configurable en 2 clics.",fc5_tag:"Tu tecla",fc6_h:"Privado por diseño",fc6_p:"Tus datos permanecen en tu PC. Audio procesado por Google Speech.",compat_tag:"Compatible con",compat_h2:"Todas tus IAs.",compat_sub:"VocalType funciona con cualquier interfaz accesible desde Windows.",test_tag:"Reseñas",test_h2:"Dejaron de<br>escribir.",test1:'"Dicto mis prompts en 10 segundos en vez de 2 minutos."',test1_role:"Consultor de marketing",test2:'"El modo rápido es increíble. Texto en tiempo real."',test2_role:"Desarrolladora freelance",test3:'"Funciona en todas las apps, no solo en el navegador."',test3_role:"Growth hacker",price_tag:"Precio",price_h2:"7 días gratis.<br>Luego decides.",price_p:"Prueba VocalType gratis 7 días. Sin tarjeta para empezar.",vs1:"Wispr Flow cuesta $14/mes — prueba VocalType gratis 7 días",vs2:"Atajo 100% personalizable",vs3:"Funciona en todas las apps de Windows",vs4:"Audio procesado localmente",price_badge:"🎉 Prueba Gratuita 7 Días",price_per:"/7 días",price_note:"Luego al precio de lanzamiento",pf1:"Dictado ilimitado",pf2:"Todas las apps de Windows",pf3:"Modo preciso + Modo rápido",pf4:"Historial de 50 dictados",pf5:"Atajo personalizable",pf6:"Español, Inglés & más",pf7:"Actualizaciones incluidas",pf8:"Cuenta requerida (solo email)",price_btn:"Empezar prueba gratuita — 7 días",cta_badge:"Listo para dictar",cta_h2:"escribir.",cta_p:"Ahorra horas cada semana.",cta_btn:"Prueba gratis — 7 días",footer_copy:"Habla con la IA."},
-de:{nav_how:"So funktioniert's",nav_feat:"Funktionen",nav_price:"Preis",nav_dl:"Herunterladen",badge:"7 Tage kostenlos",h1_1:"Hör auf zu tippen.",h1_2:"Einfach",h1_3:"sprechen.",hero_desc:'VocalType wandelt deine Stimme in Text — in <strong>jeder KI-App</strong>. Auf Windows, überall, sofort.',btn_trial:"Kostenlos testen — 7 Tage",btn_how:"Wie es funktioniert",proof:'<strong>Bereits von Hunderten</strong> KI-Nutzern genutzt',demo_ai:"Natürlich! Hier ist eine professionelle E-Mail für dich…",you:"Du",vt_active:"VocalType aktiv",chip_claude:"Claude · Aktiv",chip_gemini:"Gemini · Bereit",stat1:"schneller als Tippen<br>auf der Tastatur",stat2:"um VocalType<br>zu installieren",stat3_unit:" Tage",stat3:"kostenlos testen.<br>Keine Kreditkarte.",how_tag:"So funktioniert's",how_h2:"In 30 Sekunden<br>startklar",how_sub:"Erstelle dein Konto in 30 Sekunden, installiere die App und leg los.",step1_h:"VocalType installieren",step1_p:"Setup herunterladen und starten. Stille Installation in 10 Sekunden.",step2_h:"Öffne deine KI",step2_p:"ChatGPT, Claude, Gemini… In jedem Browser oder jeder Windows-App.",step3_h:"Mit Kürzel aktivieren",step3_p:"In Textfeld klicken und Kürzel drücken. Standard:",step3_note:"⚙️ Kürzel in Einstellungen anpassbar",step4_h:"Natürlich sprechen",step4_p:"Stimme wird in Echtzeit zu Text. Erneut drücken zum Einfügen.",transcribing:"Transkription…",recording:"● Aufnahme",feat_tag:"Funktionen",feat_h2:"Alles was du<br>brauchst.",feat_sub:"Einfach, schnell, diskret.",fc1_h:"Funktioniert in jeder Windows-App.",fc1_p:"ChatGPT, Claude, Gemini, Copilot — aber auch Word, Notepad, Discord, Gmail, Teams.",fc2_h:"Präziser & Schneller Modus",fc2_p:"Präziser Modus: perfekte Transkription. Schneller Modus: Live-Text.",fc2_tag:"2 Modi",fc3_h:"Ultraunauffällig",fc3_p:"22px-Punkt in der Ecke. Verschwindet bei Inaktivität.",fc4_h:"Smarter Verlauf",fc4_p:"Letzten 50 Diktate. Vorherige Eingabe per Klick einfügen.",fc5_h:"Anpassbares Kürzel",fc5_p:"Tastenkürzel ändern. In 2 Klicks konfigurierbar.",fc5_tag:"Deine Taste",fc6_h:"Privatsphäre by Design",fc6_p:"Daten bleiben auf deinem PC. Audio via Google Speech, nie auf unseren Servern.",compat_tag:"Kompatibel mit",compat_h2:"Allen deinen KIs.",compat_sub:"VocalType funktioniert mit jeder Windows-Schnittstelle.",test_tag:"Bewertungen",test_h2:"Sie hörten auf<br>zu tippen.",test1:'"Seit VocalType diktiere ich in 10 Sekunden statt 2 Minuten zu tippen."',test1_role:"Marketing-Berater",test2:'"Schnellmodus: Text erscheint in Echtzeit."',test2_role:"Freiberufliche Entwicklerin",test3:'"Funktioniert in jeder App, nicht nur im Browser."',test3_role:"Growth Hacker",price_tag:"Preis",price_h2:"7 Tage kostenlos.<br>Dann entscheiden.",price_p:"Teste VocalType 7 Tage kostenlos. Keine Kreditkarte erforderlich.",vs1:"Wispr Flow kostet $14/Monat — teste VocalType 7 Tage kostenlos",vs2:"100% anpassbares Kürzel",vs3:"Funktioniert in allen Windows-Apps",vs4:"Audio lokal verarbeitet",price_badge:"🎉 7 Tage Gratis-Test",price_per:"/7 Tage",price_note:"Danach zum Einführungspreis",pf1:"Unbegrenzte Diktierfunktion",pf2:"Alle Windows-Apps",pf3:"Präziser + Schneller Modus",pf4:"50 Diktate Verlauf",pf5:"Anpassbares Kürzel",pf6:"Englisch, Französisch, Deutsch & mehr",pf7:"Updates inklusive",pf8:"Konto erforderlich (nur E-Mail)",price_btn:"Gratis testen — 7 Tage",cta_badge:"Bereit zum Diktieren",cta_h2:"tippen.",cta_p:"Spare jede Woche Stunden.",cta_btn:"Gratis testen — 7 Tage",footer_copy:"Mit KI sprechen."},
-pt:{nav_how:"Como funciona",nav_feat:"Funcionalidades",nav_price:"Preço",nav_dl:"Baixar",badge:"7 dias grátis",h1_1:"Pare de digitar.",h1_2:"Apenas",h1_3:"fale.",hero_desc:'VocalType transforma sua voz em texto em <strong>todas as suas IAs</strong>. No Windows, instantaneamente.',btn_trial:"Teste grátis — 7 dias",btn_how:"Ver como funciona",proof:'<strong>Já usado por centenas</strong> de usuários de IA',demo_ai:"Claro! Aqui está um email profissional para você…",you:"Você",vt_active:"VocalType ativo",chip_claude:"Claude · Ativo",chip_gemini:"Gemini · Pronto",stat1:"mais rápido que digitar",stat2:"para instalar<br>VocalType",stat3_unit:" dias",stat3:"de teste grátis.<br>Sem cartão.",how_tag:"Como funciona",how_h2:"Pronto em<br>30 segundos",how_sub:"Crie sua conta em 30 segundos, instale o app e pronto.",step1_h:"Instale o VocalType",step1_p:"Baixe e execute o instalador. Instalação em 10 segundos.",step2_h:"Abra sua IA favorita",step2_p:"ChatGPT, Claude, Gemini… Em qualquer navegador ou app Windows.",step3_h:"Ative com seu atalho",step3_p:"Clique num campo e pressione seu atalho. Padrão:",step3_note:"⚙️ Atalho 100% personalizável",step4_h:"Fale naturalmente",step4_p:"Sua voz vira texto em tempo real. Pressione de novo para colar.",transcribing:"Transcrevendo…",recording:"● Gravando",feat_tag:"Funcionalidades",feat_h2:"Tudo que<br>você precisa.",feat_sub:"Simples, rápido, discreto.",fc1_h:"Funciona em todos os apps do Windows.",fc1_p:"ChatGPT, Claude, Gemini, Copilot — mas também Word, Bloco de notas, Discord, Gmail, Teams.",fc2_h:"Modo Preciso e Rápido",fc2_p:"Modo preciso: transcrição perfeita. Modo rápido: texto ao vivo.",fc2_tag:"2 modos",fc3_h:"Ultra discreto",fc3_p:"Um ponto de 22px no canto. Desaparece na inatividade.",fc4_h:"Histórico inteligente",fc4_p:"Últimas 50 ditações. Cole um prompt anterior com um clique.",fc5_h:"Atalho personalizável",fc5_p:"Mude o atalho conforme seus hábitos.",fc5_tag:"Sua tecla",fc6_h:"Privado por design",fc6_p:"Seus dados no seu PC. Áudio via Google Speech.",compat_tag:"Compatível com",compat_h2:"Todas as suas IAs.",compat_sub:"VocalType funciona com qualquer interface no Windows.",test_tag:"Avaliações",test_h2:"Pararam de<br>digitar.",test1:'"Desde o VocalType, dito meus prompts em 10 segundos."',test1_role:"Consultor de marketing",test2:'"O modo rápido é incrível. Texto em tempo real."',test2_role:"Desenvolvedora freelance",test3:'"Funciona em todas as apps, não só no navegador."',test3_role:"Growth hacker",price_tag:"Preço",price_h2:"7 dias grátis.<br>Então decida.",price_p:"Experimente o VocalType grátis por 7 dias. Sem cartão para começar.",vs1:"Wispr Flow custa $14/mês — VocalType grátis 7 dias",vs2:"Atalho 100% personalizável",vs3:"Funciona em todos os apps do Windows",vs4:"Áudio processado localmente",price_badge:"🎉 7 Dias Grátis",price_per:"/7 dias",price_note:"Depois ao preço de lançamento",pf1:"Ditado ilimitado",pf2:"Todos os apps do Windows",pf3:"Modo preciso + Modo rápido",pf4:"Histórico de 50 ditações",pf5:"Atalho personalizável",pf6:"Português, Inglês & mais",pf7:"Atualizações incluídas",pf8:"Conta necessária (somente email)",price_btn:"Começar teste grátis — 7 dias",cta_badge:"Pronto para ditar",cta_h2:"digitar.",cta_p:"Economize horas toda semana.",cta_btn:"Teste grátis — 7 dias",footer_copy:"Fale com a IA."},
-it:{nav_how:"Come funziona",nav_feat:"Funzionalità",nav_price:"Prezzo",nav_dl:"Scarica",badge:"7 giorni gratis",h1_1:"Smetti di scrivere.",h1_2:"Parla",h1_3:"semplicemente.",hero_desc:'VocalType trasforma la tua voce in testo in <strong>tutte le tue IA</strong>. Su Windows, ovunque, istantaneamente.',btn_trial:"Prova gratis — 7 giorni",btn_how:"Scopri come funziona",proof:'<strong>Già usato da centinaia</strong> di utenti IA',demo_ai:"Certo! Ecco una email professionale curata per te…",you:"Tu",vt_active:"VocalType attivo",chip_claude:"Claude · Attivo",chip_gemini:"Gemini · Pronto",stat1:"più veloce della digitazione",stat2:"per installare<br>VocalType",stat3_unit:" giorni",stat3:"di prova gratis.<br>Senza carta.",how_tag:"Come funziona",how_h2:"Pronto in<br>30 secondi",how_sub:"Crea il tuo account in 30 secondi, installa l'app e sei pronto.",step1_h:"Installa VocalType",step1_p:"Scarica ed esegui l'installer. Installazione silenziosa in 10 secondi.",step2_h:"Apri la tua IA preferita",step2_p:"ChatGPT, Claude, Gemini… In qualsiasi browser o app Windows.",step3_h:"Attiva con la tua scorciatoia",step3_p:"Clicca in qualsiasi campo e premi la scorciatoia. Default:",step3_note:"⚙️ Scorciatoia 100% personalizzabile",step4_h:"Parla naturalmente",step4_p:"La tua voce diventa testo in tempo reale. Premi di nuovo per incollare.",transcribing:"Trascrizione in corso…",recording:"● Registrazione",feat_tag:"Funzionalità",feat_h2:"Tutto ciò che<br>ti serve.",feat_sub:"Semplice, veloce, discreto.",fc1_h:"Funziona in tutte le app Windows.",fc1_p:"ChatGPT, Claude, Gemini, Copilot — ma anche Word, Blocco note, Discord, Gmail, Teams.",fc2_h:"Modalità Precisa e Rapida",fc2_p:"Modalità precisa: trascrizione perfetta. Modalità rapida: testo in diretta.",fc2_tag:"2 modalità",fc3_h:"Ultra discreto",fc3_p:"Un punto di 22px nell'angolo. Scompare in inattività.",fc4_h:"Cronologia intelligente",fc4_p:"Ultime 50 dettature. Incolla un prompt precedente con un clic.",fc5_h:"Scorciatoia personalizzabile",fc5_p:"Cambia la scorciatoia secondo le tue abitudini.",fc5_tag:"Il tuo tasto",fc6_h:"Privato by design",fc6_p:"I tuoi dati restano sul tuo PC. Audio via Google Speech.",compat_tag:"Compatibile con",compat_h2:"Tutte le tue IA.",compat_sub:"VocalType funziona con qualsiasi interfaccia su Windows.",test_tag:"Recensioni",test_h2:"Hanno smesso<br>di scrivere.",test1:'"Da quando uso VocalType, detto i miei prompt in 10 secondi."',test1_role:"Consulente marketing",test2:'"La modalità rapida è incredibile. Testo in tempo reale."',test2_role:"Sviluppatrice freelance",test3:'"Funziona in tutte le app, non solo nel browser."',test3_role:"Growth hacker",price_tag:"Prezzo",price_h2:"7 giorni gratis.<br>Poi decidi.",price_p:"Prova VocalType gratis per 7 giorni. Nessuna carta per iniziare.",vs1:"Wispr Flow costa $14/mese — prova VocalType gratis 7 giorni",vs2:"Scorciatoia 100% personalizzabile",vs3:"Funziona in tutte le app Windows",vs4:"Audio elaborato localmente",price_badge:"🎉 7 Giorni Gratis",price_per:"/7 giorni",price_note:"Poi al prezzo di lancio",pf1:"Dettatura illimitata",pf2:"Tutte le app Windows",pf3:"Modalità precisa + rapida",pf4:"Cronologia 50 dettature",pf5:"Scorciatoia personalizzabile",pf6:"Italiano, Inglese & altro",pf7:"Aggiornamenti inclusi",pf8:"Account richiesto (solo email)",price_btn:"Inizia la prova gratis — 7 giorni",cta_badge:"Pronto a dettare",cta_h2:"scrivere.",cta_p:"Risparmia ore ogni settimana.",cta_btn:"Prova gratis — 7 giorni",footer_copy:"Parla con l'IA."},
-ja:{nav_how:"使い方",nav_feat:"機能",nav_price:"料金",nav_dl:"ダウンロード",badge:"7日間無料",h1_1:"タイピングは",h1_2:"もう",h1_3:"不要。",hero_desc:'VocalTypeはあなたの音声をテキストに変換 — <strong>あらゆるAIツール</strong>で。Windowsで、どこでも、瞬時に。',btn_trial:"無料トライアル開始 — 7日間",btn_how:"使い方を見る",proof:'<strong>すでに何百人もの</strong>AIユーザーが利用中',demo_ai:"もちろん！プロフェッショナルなメールをご用意しました…",you:"あなた",vt_active:"VocalType 起動中",chip_claude:"Claude · 起動中",chip_gemini:"Gemini · 準備完了",stat1:"キーボード入力より高速",stat2:"インストール時間",stat3_unit:"日間",stat3:"無料トライアル。カード不要。",how_tag:"使い方",how_h2:"30秒で準備完了",how_sub:"30秒でアカウントを作成し、アプリをインストールすれば準備完了。",step1_h:"VocalTypeをインストール",step1_p:"セットアップをダウンロードして実行。10秒でインストール完了。",step2_h:"好きなAIを開く",step2_p:"ChatGPT、Claude、Gemini… どんなブラウザやWindowsアプリでも。",step3_h:"ショートカットで起動",step3_p:"テキストフィールドをクリックしてショートカットを押します。デフォルト：",step3_note:"⚙️ 設定で完全カスタマイズ可能",step4_h:"自然に話す",step4_p:"あなたの声がリアルタイムでテキストに変換されます。",transcribing:"文字起こし中…",recording:"● 録音中",feat_tag:"機能",feat_h2:"必要なものが<br>すべてある。",feat_sub:"シンプル、高速、控えめ。",fc1_h:"すべてのWindowsアプリで動作。",fc1_p:"ChatGPT、Claude、Gemini、Copilot — さらにWord、メモ帳、Discord、Gmail、Teams。",fc2_h:"正確モードと高速モード",fc2_p:"正確モード：録音後に完璧な文字起こし。高速モード：リアルタイムテキスト。",fc2_tag:"2つのモード",fc3_h:"超控えめ",fc3_p:"画面隅の22pxのドット。非アクティブ時は消えます。",fc4_h:"スマートな履歴",fc4_p:"過去50件のディクテーション。ワンクリックで以前のプロンプトを貼り付け。",fc5_h:"カスタムショートカット",fc5_p:"習慣に合わせてショートカットを変更。設定で2クリック。",fc5_tag:"あなたのキー",fc6_h:"プライバシー重視",fc6_p:"データはPCに保存。音声はGoogle Speechで処理。",compat_tag:"対応ツール",compat_h2:"すべてのAI対応。",compat_sub:"VocalTypeはWindowsからアクセス可能なあらゆるインターフェースで動作します。",test_tag:"レビュー",test_h2:"彼らはタイピングを<br>やめた。",test1:"「VocalType以来、10秒でプロンプトを口述できます。」",test1_role:"マーケティングコンサルタント",test2:"「高速モードは素晴らしい。リアルタイムでテキストが表示されます。」",test2_role:"フリーランス開発者",test3:"「ブラウザだけでなく、すべてのアプリで動作します。」",test3_role:"グロースハッカー",price_tag:"料金",price_h2:"7日間無料。<br>その後決める。",price_p:"VocalTypeを7日間無料でお試しください。カード不要。",vs1:"Wispr Flowは月$14 — VocalTypeを7日間無料でお試し",vs2:"ショートカット100%カスタマイズ可能",vs3:"すべてのWindowsアプリで動作",vs4:"音声はローカルで処理",price_badge:"🎉 7日間無料トライアル",price_per:"/7日間",price_note:"その後はローンチ価格で継続",pf1:"すべてのAIで無制限ディクテーション",pf2:"すべてのWindowsアプリ対応",pf3:"正確モード + 高速モード",pf4:"50件のディクテーション履歴",pf5:"カスタムショートカット",pf6:"日本語、英語、フランス語など",pf7:"アップデート込み",pf8:"アカウント必須（メールのみ）",price_btn:"無料トライアル開始 — 7日間",cta_badge:"ディクテーション準備完了",cta_h2:"タイピング。",cta_p:"毎週何時間も節約。VocalTypeを10秒でインストール。",cta_btn:"無料トライアル — 7日間",footer_copy:"AIに話しかけよう。"},
-zh:{nav_how:"使用方法",nav_feat:"功能",nav_price:"价格",nav_dl:"下载",badge:"7天免费试用",h1_1:"停止打字。",h1_2:"只需",h1_3:"开口说。",hero_desc:'VocalType将您的语音转换为文字，适用于<strong>所有AI工具</strong>。在Windows上，随处可用，即时生效。',btn_trial:"免费试用 — 7天",btn_how:"查看使用方法",proof:'<strong>已被数百名</strong>AI用户使用',demo_ai:"当然！这是为您准备的专业电子邮件……",you:"您",vt_active:"VocalType 运行中",chip_claude:"Claude · 运行中",chip_gemini:"Gemini · 就绪",stat1:"比键盘打字更快",stat2:"安装时间",stat3_unit:"天",stat3:"免费试用。无需信用卡。",how_tag:"使用方法",how_h2:"30秒内<br>准备就绪",how_sub:"30秒内创建账户，安装应用，即可使用。",step1_h:"安装 VocalType",step1_p:"下载并运行安装程序。10秒内静默安装完成。",step2_h:"打开您喜爱的AI",step2_p:"ChatGPT、Claude、Gemini……在任何浏览器或Windows应用中使用。",step3_h:"使用快捷键激活",step3_p:"在任何文本框中单击，然后按下快捷键。默认：",step3_note:"⚙️ 在设置中完全自定义快捷键",step4_h:"自然说话",step4_p:"您的语音实时转换为文字。再次按下即可粘贴。",transcribing:"转录中…",recording:"● 录音中",feat_tag:"功能",feat_h2:"一切您<br>所需要的。",feat_sub:"简单、快速、低调。",fc1_h:"在所有Windows应用中运行。",fc1_p:"ChatGPT、Claude、Gemini、Copilot — 还有Word、记事本、Discord、Gmail、Teams。",fc2_h:"精确模式与快速模式",fc2_p:"精确模式：录音后完美转录。快速模式：说话时实时显示文字。",fc2_tag:"2种模式",fc3_h:"极其低调",fc3_p:"角落里一个22px的点。闲置时消失。",fc4_h:"智能历史记录",fc4_p:"访问最近50条语音输入。一键粘贴之前的提示词。",fc5_h:"自定义快捷键",fc5_p:"根据您的习惯更改快捷键。在设置中2次点击即可配置。",fc5_tag:"您的按键",fc6_h:"隐私优先设计",fc6_p:"您的数据保留在PC上。音频由Google Speech处理，从不存储在我们的服务器上。",compat_tag:"兼容",compat_h2:"所有AI工具。",compat_sub:"VocalType适用于Windows可访问的任何界面。",test_tag:"评价",test_h2:"他们停止<br>打字了。",test1:"「我10秒就能口述提示词，而不是打字2分钟。」",test1_role:"营销顾问",test2:"「快速模式太棒了。我说话的同时文字就出现了。」",test2_role:"自由职业开发者",test3:"「不仅在浏览器中，在所有应用中都能用。」",test3_role:"增长黑客",price_tag:"价格",price_h2:"7天免费。<br>然后决定。",price_p:"免费试用VocalType 7天。所有功能解锁。无需信用卡即可开始。",vs1:"Wispr Flow每月$14 — 免费试用VocalType 7天",vs2:"快捷键100%可自定义",vs3:"在所有Windows应用中运行",vs4:"音频在本地处理，从不存储在我们的服务器上",price_badge:"🎉 7天免费试用",price_per:"/7天",price_note:"之后以发布价格继续",pf1:"在所有AI中无限语音输入",pf2:"兼容所有Windows应用",pf3:"精确模式 + 快速模式",pf4:"50条语音输入历史",pf5:"自定义快捷键",pf6:"中文、英文、法文等",pf7:"包含更新",pf8:"需要账户（仅需邮箱）",price_btn:"开始免费试用 — 7天",cta_badge:"准备好语音输入",cta_h2:"打字。",cta_p:"每周节省数小时。10秒安装VocalType。",cta_btn:"免费试用 — 7天",footer_copy:"与AI对话。"}
+const T = {
+en:{
+  n_how:"How it works",n_price:"Pricing",n_dl:"Free download",
+  eyebrow:"7-day free trial · Windows 10 & 11",
+  h1:"Speak your prompts.<br>Stop typing to ChatGPT.",
+  hsub:'Speak your prompts into <strong>ChatGPT, Claude, Gemini, Copilot</strong> with one shortcut — in any Windows app. 4× faster than typing.',
+  h_btn:"Start free trial — 7 days",h_sec:"See how it works",
+  h_proof:'Used by <strong>AI power users</strong> on Windows',
+  demo_ai:"Here's a concise summary of your meeting with next steps outlined clearly…",
+  you:"You",vt_on:"VocalType active",
+  strip_label:"Works in ChatGPT, Claude, Gemini and most Windows apps",
+  how_tag:"How it works",how_h2:"Ready in<br>30 seconds.",
+  how_sub:"Install, open your AI, press the shortcut. That's it.",
+  s1h:"Download & install",s1p:"~15 MB. Runs silently in the background on Windows 10 & 11. Takes 10 seconds.",
+  s2h:"Open any AI or text field",s2p:"ChatGPT, Claude, Gemini in your browser — or Word, Notepad, Discord, Teams, anything on Windows.",
+  s3h:"Press your shortcut",s3p:"Click in the text field, press your shortcut, speak, press again. Done.",
+  s3note:"⚙️ Fully customizable in settings",
+  before:"Before",before_body:"Typing a full ChatGPT prompt on keyboard",before_time:"~45 sec",
+  after:"After",after_body:"Shortcut → speak the same prompt",after_time:"~8 sec",
+  sk_label:"Your shortcut (customizable)",
+  ww_tag:"Compatible with",ww_h2:"Your AI tools,<br>every Windows app.",
+  ww_sub:"If you can click there and type, VocalType works there — ChatGPT, Claude, Gemini, most browsers and most Windows apps.",
+  more_apps:'+ <strong>Perplexity, DeepSeek, Mistral, Outlook, Teams, Notepad</strong> and any Windows text field.',
+  uc_tag:"Use cases",uc_h2:"Who uses VocalType.",
+  uc1h:"Prompt writing",uc1p:"You write 20+ prompts a day in ChatGPT or Claude. VocalType turns a 45-second typing session into 8 seconds of speech. Speak, paste, done.",
+  uc2h:"Email & writing",uc2p:"Dictate emails, Slack messages, documents. Way faster than typing, especially for long answers.",
+  uc3h:"Notes & ideas",uc3p:"Capture ideas the moment you have them. Speak into Notion, Notepad or any note app on Windows.",
+  p_tag:"Pricing",p_h2:"Simple pricing.<br>Start free.",
+  p1_name:"Free Trial",p1_sub:"7 days, all features unlocked",p1_mins:"Full access · 7 days",
+  p1_f1:"Unlimited dictation for 7 days",p1_f2:"All modes included (Precise + Fast)",p1_f3:"Works in every Windows app",p1_f4:"Customizable shortcut",p1_f5:"Account required (email only)",
+  p1_btn:"Download & start trial",p1_note:"Windows 10 & 11 · ~15 MB",
+  p2_badge:"Most popular",p2_name:"Starter",p2_mo:"/mo",p2_sub:"For regular AI users",p2_mins:"300 minutes / month",
+  p2_f1:"300 min of dictation per month",p2_f2:"Precise mode + Fast mode",p2_f3:"Works in all Windows apps",p2_f4:"Customizable shortcut",p2_f5:"50-dictation history",
+  p2_btn:"Start free trial",p2_note:"7-day free trial · no credit card to start",
+  p3_name:"Pro",p3_mo:"/mo",p3_sub:"For daily power users",p3_mins:"1,000 minutes / month",
+  p3_f1:"1,000 min of dictation per month",p3_f2:"Everything in Starter",p3_f3:"Priority processing speed",p3_f4:"Extended 200-dictation history",p3_f5:"Early access to new features",
+  p3_btn:"Start free trial",p3_note:"7-day free trial included",
+  pn_title:"How dictation minutes work:",pn_body:"Each minute of speech = 1 minute deducted. Unused minutes don't roll over. The free 7-day trial includes full access with no minute cap.",
+  why_tag:"Why VocalType",why_h2:"Built for AI users,<br>not dictation fans.",
+  w1h:"Works in ChatGPT, Claude, Gemini and most Windows apps",w1p:"Press your shortcut in any AI tool or Windows app. If you can click in a text field and type, VocalType works there.",
+  w2h:"Instant transcription",w2p:"Fast mode: text appears as you speak. Precise mode: perfect accuracy after recording. One shortcut, two modes, zero friction.",
+  w3h:"Your audio stays private",w3p:"Audio is transcribed and discarded. We never store your voice recordings. Your prompts stay yours.",
+  p3_badge:"Most popular",
+  p4_name:"Unlimited",p4_mo:"/mo",p4_sub:"For heavy daily use",p4_mins:"Fair use · no cap",
+  p4_f1:"Unlimited dictation (fair use)",p4_f2:"Everything in Pro",p4_f3:"Highest priority processing",p4_f4:"Unlimited history",p4_f5:"Priority support",
+  p4_btn:"Start free trial",p4_note:"7-day free trial included",
+  cta_h2:"Start speaking.<br>Stop typing.",cta_sub:"Install in 10 seconds. Try 7 days free. No credit card to start.",cta_btn:"Download VocalType — Free"
+},
+fr:{
+  n_how:"Comment ça marche",n_price:"Tarif",n_dl:"Télécharger",
+  eyebrow:"7 jours d'essai gratuit · Windows 10 & 11",
+  h1:"Dictez vos prompts.<br>Arrêtez de taper dans ChatGPT.",
+  hsub:'Dictez vos prompts dans <strong>ChatGPT, Claude, Gemini, Copilot</strong> avec un raccourci — dans n\'importe quelle app Windows. 4× plus rapide.',
+  h_btn:"Essai gratuit — 7 jours",h_sec:"Voir comment ça marche",
+  h_proof:'Utilisé par des <strong>utilisateurs IA avancés</strong> sur Windows',
+  demo_ai:"Voici un résumé clair de votre réunion avec les prochaines étapes…",
+  you:"Vous",vt_on:"VocalType actif",
+  strip_label:"ChatGPT, Claude, Gemini et la plupart des apps Windows",
+  how_tag:"Comment ça marche",how_h2:"Prêt en<br>30 secondes.",
+  how_sub:"Installez, ouvrez votre IA, appuyez sur le raccourci. C'est tout.",
+  s1h:"Téléchargez et installez",s1p:"~15 Mo. Fonctionne en arrière-plan sur Windows 10 & 11. Installation en 10 secondes.",
+  s2h:"Ouvrez n'importe quelle IA ou champ texte",s2p:"ChatGPT, Claude, Gemini dans votre navigateur — ou Word, Bloc-notes, Discord, Teams, n'importe quelle app Windows.",
+  s3h:"Appuyez sur votre raccourci",s3p:"Cliquez dans le champ texte, appuyez sur votre raccourci, parlez, appuyez à nouveau. Fait.",
+  s3note:"⚙️ Entièrement personnalisable dans les paramètres",
+  before:"Avant",before_body:"Taper un prompt complet au clavier sur ChatGPT",before_time:"~45 sec",
+  after:"Après",after_body:"Raccourci → dicter le même prompt",after_time:"~8 sec",
+  sk_label:"Votre raccourci (personnalisable)",
+  ww_tag:"Compatible avec",ww_h2:"Vos IA,<br>toutes les apps Windows.",
+  ww_sub:"Si vous pouvez cliquer et taper, VocalType fonctionne — ChatGPT, Claude, Gemini, la plupart des navigateurs et apps Windows.",
+  more_apps:'+ <strong>Perplexity, DeepSeek, Mistral, Outlook, Teams, Bloc-notes</strong> et tout champ texte Windows.',
+  uc_tag:"Cas d'usage",uc_h2:"Qui utilise VocalType.",
+  uc1h:"Rédaction de prompts",uc1p:"Vous écrivez 20+ prompts par jour dans ChatGPT ou Claude. VocalType transforme 45 secondes de frappe en 8 secondes de dictée.",
+  uc2h:"Emails & rédaction",uc2p:"Dictez vos emails, messages Slack, documents. Bien plus rapide que de taper.",
+  uc3h:"Notes & idées",uc3p:"Capturez vos idées au moment où elles arrivent. Parlez dans Notion, le Bloc-notes ou n'importe quelle app.",
+  p_tag:"Tarif",p_h2:"Tarif simple.<br>Commencez gratuitement.",
+  p1_name:"Essai Gratuit",p1_sub:"7 jours, toutes les fonctionnalités",p1_mins:"Accès complet · 7 jours",
+  p1_f1:"Dictée illimitée pendant 7 jours",p1_f2:"Tous les modes inclus (Précis + Rapide)",p1_f3:"Fonctionne dans toutes les apps Windows",p1_f4:"Raccourci personnalisable",p1_f5:"Compte requis (email seulement)",
+  p1_btn:"Télécharger et commencer",p1_note:"Windows 10 & 11 · ~15 Mo",
+  p2_badge:"Le plus populaire",p2_name:"Starter",p2_mo:"/mois",p2_sub:"Pour les utilisateurs réguliers",p2_mins:"300 minutes / mois",
+  p2_f1:"300 min de dictée par mois",p2_f2:"Mode précis + Mode rapide",p2_f3:"Fonctionne dans toutes les apps Windows",p2_f4:"Raccourci personnalisable",p2_f5:"Historique 50 dictées",
+  p2_btn:"Démarrer l'essai gratuit",p2_note:"7 jours gratuits · aucune carte bancaire pour commencer",
+  p3_name:"Pro",p3_mo:"/mois",p3_sub:"Pour les utilisateurs quotidiens",p3_mins:"1 000 minutes / mois",
+  p3_f1:"1 000 min de dictée par mois",p3_f2:"Tout ce qu'inclut Starter",p3_f3:"Vitesse de traitement prioritaire",p3_f4:"Historique étendu (200 dictées)",p3_f5:"Accès anticipé aux nouvelles fonctionnalités",
+  p3_btn:"Démarrer l'essai gratuit",p3_note:"7 jours d'essai inclus",
+  pn_title:"Comment fonctionnent les minutes :",pn_body:"Chaque minute de parole = 1 minute décomptée. Les minutes inutilisées ne sont pas reportées. L'essai gratuit de 7 jours inclut un accès complet sans limite de minutes.",
+  why_tag:"Pourquoi VocalType",why_h2:"Fait pour les utilisateurs IA,<br>pas les fans de dictée.",
+  w1h:"Fonctionne dans ChatGPT, Claude, Gemini et la plupart des apps Windows",w1p:"Appuyez sur votre raccourci dans n'importe quelle IA ou app Windows. Si vous pouvez cliquer et taper, VocalType fonctionne.",
+  w2h:"Transcription instantanée",w2p:"Mode rapide : le texte apparaît pendant que vous parlez. Mode précis : précision parfaite après enregistrement.",
+  w3h:"Votre audio reste privé",w3p:"L'audio est transcrit puis supprimé. Vos enregistrements vocaux ne sont jamais stockés. Vos prompts restent les vôtres.",
+  p3_badge:"Le plus populaire",
+  p4_name:"Unlimited",p4_mo:"/mois",p4_sub:"Pour une utilisation intensive",p4_mins:"Fair use · sans limite",
+  p4_f1:"Dictée illimitée (fair use)",p4_f2:"Tout ce qu'inclut Pro",p4_f3:"Traitement prioritaire maximal",p4_f4:"Historique illimité",p4_f5:"Support prioritaire",
+  p4_btn:"Démarrer l'essai gratuit",p4_note:"7 jours d'essai inclus",
+  cta_h2:"Parlez.<br>Arrêtez de taper.",cta_sub:"Installation en 10 secondes. 7 jours gratuits. Aucune carte pour commencer.",cta_btn:"Télécharger VocalType — Gratuit"
+}
 };
 
-const PROMPTS={
-en:["Explain machine learning to me like I'm 10.","Write me a professional follow-up email.","Give me 5 LinkedIn post ideas for this week.","Summarize this meeting and suggest the 3 next steps."],
-fr:["Explique-moi le machine learning comme si j'avais 10 ans.","Rédige un email de relance client professionnel.","Donne-moi 5 idées de posts LinkedIn pour cette semaine.","Résume cette réunion et propose les 3 prochaines actions."],
-es:["Explícame el machine learning como si tuviera 10 años.","Escríbeme un email profesional de seguimiento.","Dame 5 ideas de posts para LinkedIn esta semana.","Resume esta reunión y sugiere los 3 próximos pasos."],
-de:["Erkläre mir Machine Learning, als wäre ich 10 Jahre alt.","Schreib mir eine professionelle Follow-up-E-Mail.","Gib mir 5 LinkedIn-Post-Ideen für diese Woche.","Fasse dieses Meeting zusammen."],
-pt:["Explica-me machine learning como se eu tivesse 10 anos.","Escreve-me um email profissional de acompanhamento.","Dá-me 5 ideias de posts para o LinkedIn esta semana.","Resume esta reunião e sugere os próximos passos."],
-it:["Spiegami il machine learning come se avessi 10 anni.","Scrivimi un'email professionale di follow-up.","Dammi 5 idee di post per LinkedIn questa settimana.","Riassumi questa riunione e suggerisci i passi successivi."],
-ja:["機械学習を10歳の子供に説明するように教えて。","プロフェッショナルなフォローアップメールを書いて。","今週のLinkedIn投稿アイデアを5つ教えて。","この会議を要約して次のステップを提案して。"],
-zh:["用10岁孩子能理解的方式解释机器学习。","帮我写一封专业的跟进邮件。","给我5个本周LinkedIn帖子创意。","总结这次会议并建议接下来的步骤。"]
+const PROMPTS = {
+  en:["Summarize this meeting and suggest the 3 next action items.","Write a professional follow-up email to my client.","Give me 5 LinkedIn post ideas for this week.","Explain this code and tell me how to improve it."],
+  fr:["Résume cette réunion et propose les 3 prochaines actions.","Rédige un email de relance professionnel à mon client.","Donne-moi 5 idées de posts LinkedIn pour cette semaine.","Explique ce code et dis-moi comment l'améliorer."]
 };
 
-let currentLang='en';
-let heroPrompts=PROMPTS.en;
+let lang = 'en';
+let prompts = PROMPTS.en;
 
-function setLang(lang){
-  currentLang=lang;
-  const d=T[lang]||T.en;
+function setLang(l){
+  lang = l;
+  prompts = PROMPTS[l] || PROMPTS.en;
+  const d = T[l] || T.en;
   document.querySelectorAll('[data-t]').forEach(el=>{
-    const k=el.getAttribute('data-t');
-    if(d[k]!==undefined) el.innerHTML=d[k];
+    const k = el.getAttribute('data-t');
+    if(d[k] !== undefined) el.innerHTML = d[k];
   });
-  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.textContent===lang.toUpperCase()));
-  document.getElementById('html-root').lang=lang;
-  heroPrompts=PROMPTS[lang]||PROMPTS.en;
+  document.querySelectorAll('.lb').forEach(b=>b.classList.toggle('on', b.textContent===l.toUpperCase()));
+  document.getElementById('root').lang = l;
 }
 
-function detectLang(){const bl=(navigator.language||'en').slice(0,2).toLowerCase();return T[bl]?bl:'en';}
-
-// Typewriter HERO
-let hpi=0,hci=0,hdel=false;
-const hel=document.getElementById('typed-hero');
-function typeHero(){
-  const cur=heroPrompts[hpi];
-  if(!hdel){hel.textContent=cur.slice(0,++hci);if(hci===cur.length){hdel=true;setTimeout(typeHero,2200);return;}setTimeout(typeHero,42);}
-  else{hel.textContent=cur.slice(0,--hci);if(hci===0){hdel=false;hpi=(hpi+1)%heroPrompts.length;setTimeout(typeHero,500);return;}setTimeout(typeHero,16);}
+// Typewriter
+let pi=0,ci=0,del=false;
+const tel = document.getElementById('typed');
+function type(){
+  const cur = prompts[pi];
+  if(!del){
+    tel.textContent = cur.slice(0,++ci);
+    if(ci===cur.length){del=true;setTimeout(type,2400);return;}
+    setTimeout(type,44);
+  } else {
+    tel.textContent = cur.slice(0,--ci);
+    if(ci===0){del=false;pi=(pi+1)%prompts.length;setTimeout(type,500);return;}
+    setTimeout(type,14);
+  }
 }
-typeHero();
-
-// Typewriter HOW
-const howP=["Analyze crypto market trends and give me 3 recommendations.","Create a marketing campaign for my B2B SaaS.","Write me a Python function that parses JSON."];
-let wpi=0,wci=0,wdel=false;
-const wel=document.getElementById('typed-how');
-if(wel){
-  function typeHow(){const cur=howP[wpi];if(!wdel){wel.textContent=cur.slice(0,++wci);if(wci===cur.length){wdel=true;setTimeout(typeHow,2000);return;}setTimeout(typeHow,48);}else{wel.textContent=cur.slice(0,--wci);if(wci===0){wdel=false;wpi=(wpi+1)%howP.length;setTimeout(typeHow,600);return;}setTimeout(typeHow,18);}}
-  typeHow();
-}
+type();
 
 // Scroll reveal
-const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');});},{threshold:.1,rootMargin:'0px 0px -40px 0px'});
-document.querySelectorAll('.reveal').forEach(r=>obs.observe(r));
+const io = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in')});
+},{threshold:.1,rootMargin:'0 0 -30px 0'});
+document.querySelectorAll('.rv').forEach(el=>io.observe(el));
 
-// Auto-detect language
-const det=detectLang();
-if(det!=='en') setLang(det);
+// Detect browser lang
+const bl = (navigator.language||'en').slice(0,2).toLowerCase();
+if(bl==='fr') setLang('fr');
 </script>
 </body>
 </html>
