@@ -6,3 +6,8 @@ pyperclip>=1.8.0
 keyboard>=0.13.0
 Pillow>=9.0.0
 pystray>=0.15.0
+flask-cors
+flask>=2.0.0
+stripe>=5.0.0
+PyJWT>=2.0.0
+werkzeug>=2.0.0
